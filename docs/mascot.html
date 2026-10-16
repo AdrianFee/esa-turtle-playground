@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pip design sheet · ESA Turtle Playground</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <style>
+    :root { --paper: #fbf6ec; --ink: #1e2430; --soft: #4a5160; --rule: #d9cdb8; --accent: #167a50; --accent-deep: #0f5c3c; --accent-wash: #ddf3e6; --warn: #7a4e00; --warn-wash: #fff1cc; --error: #b3341a; --error-wash: #ffece6; }
+    body { margin: 0; padding: 32px 40px 80px; font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif; font-size: 16px; color: var(--ink); background: var(--paper); }
+    h1 { font-family: Fredoka, sans-serif; font-weight: 600; font-size: 30px; margin: 0 0 4px; }
+    .sub { color: var(--soft); margin-bottom: 32px; }
+    h2 { font-family: Fredoka, sans-serif; font-weight: 600; font-size: 22px; margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid var(--rule); }
+    .row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-end; }
+    .cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .cell .label { font-size: 15px; color: var(--soft); text-align: center; max-width: 160px; }
+    .cell .box { display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #b3a68a; border-radius: 8px; }
+    .cell .box.dark { background: #000; }
+    .cell .box.paper { background: var(--paper); }
+    canvas { display: block; }
+    .banner { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 10px; max-width: 420px; font-size: 17px; }
+    .banner b { display: block; font-size: 18px; margin-bottom: 2px; }
+    .banner.pass { background: var(--accent-wash); box-shadow: inset 0 0 0 2px var(--accent-deep); } .banner.pass b { color: var(--accent-deep); }
+    .banner.nudge { background: var(--warn-wash); box-shadow: inset 0 0 0 2px var(--warn); } .banner.nudge b { color: var(--warn); }
+    .banner.error { background: var(--error-wash); box-shadow: inset 4px 0 0 var(--error); } .banner.error b { color: var(--error); }
+    .banner svg { flex: none; margin-top: 2px; }
+    .header-sample { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); width: max-content; }
+    .header-sample .name { font-family: Fredoka, sans-serif; font-weight: 600; font-size: 22px; }
+    .stamps { display: inline-flex; gap: 2px; }
+    .note { max-width: 70ch; color: var(--soft); }
+  </style>
+</head>
+<body>
+  <h1>Pip: design sheet</h1>
+  <div class="sub">Placeholder name. Same shapes everywhere: one module (<code>js/pip.js</code>) draws the canvas sprite and the header, banner and stamp SVGs. Nothing is wired into the app yet.</div>
+
+  <h2>1. Header mascot, four states</h2>
+  <p class="note">Seen from above, facing right like the turtle on the canvas. Idle blinks now and then (in 4b). Running bobs. Oops is puzzled: wide eyes looking sideways, one brow up, a small "o" mouth and a question mark. Never sad, never cross. Happy is closed smiling eyes and a wide smile, one bounce.</p>
+  <div class="row" id="header40"></div>
+  <div class="row" id="header160" style="margin-top: 24px"></div>
+  <div style="margin-top: 24px" class="row"><div class="cell"><div class="header-sample" id="headerSample"></div><div class="label">in the header at 40px</div></div></div>
+
+  <h2>2. Canvas sprite, actual size on white</h2>
+  <p class="note">Drawn exactly as the canvas will draw it (sprite scale 1.35 at this screen's pixel ratio). Shell = fill colour, shell outline = pen colour, head/legs/tail always Pip-green with an ink outline and a pale halo. Each pair is shown at actual size and at 4× for inspection.</p>
+  <div class="row" id="combos"></div>
+
+  <h2>3. Headings 0, 90, 180, 270</h2>
+  <div class="row" id="headings"></div>
+
+  <h2>4. Passport stamp</h2>
+  <p class="note">Empty: a dashed ring with the lesson number. Stamped: a sun-yellow disc with a green ring and Pip's footprint. Challenges are rounded squares. At header size (10px, 8px at narrow widths) the stamped one reads as a green-ringed yellow dot, the empty one as a grey ring.</p>
+  <div class="row" id="stamps"></div>
+
+  <h2>5. Banner faces</h2>
+  <div class="row" id="faces"></div>
+  <div class="row" id="banners" style="margin-top: 16px; align-items: flex-start"></div>
+
+<script type="module">
+  import { drawPipSprite, pipSVG, faceSVG, stampSVG } from "../js/pip.js";
+  const SPRITE_SCALE = 1.35;
+  const dpr = window.devicePixelRatio || 1;
+  const states = ["idle", "running", "oops", "happy"];
+  const cell = (inner, label, boxClass = "") => `<div class="cell"><div class="box ${boxClass}">${inner}</div><div class="label">${label}</div></div>`;
+
+  document.getElementById("header40").innerHTML = states.map((s) => cell(`<div style="padding:12px">${pipSVG({ state: s, size: 40 })}</div>`, s + " · 40px", "paper")).join("");
+  document.getElementById("header160").innerHTML = states.map((s) => cell(`<div style="padding:12px">${pipSVG({ state: s, size: 160 })}</div>`, s + " · 160px", "paper")).join("");
+  document.getElementById("headerSample").innerHTML = pipSVG({ state: "idle", size: 40 }) + `<span class="name">Turtle Playground</span>`;
+
+  // canvas sprite
+  function spriteCanvas({ fill, stroke, bg = "#fff", heading = 90, zoom = 1, eyes = "open" }) {
+    const px = 72 * zoom;
+    const cv = document.createElement("canvas");
+    cv.width = px * dpr; cv.height = px * dpr; cv.style.width = px + "px"; cv.style.height = px + "px";
+    const c = cv.getContext("2d");
+    c.fillStyle = bg; c.fillRect(0, 0, cv.width, cv.height);
+    c.save();
+    c.translate(cv.width / 2, cv.height / 2);
+    c.rotate(-(heading - 90) * Math.PI / 180);
+    c.scale(dpr * SPRITE_SCALE * zoom, dpr * SPRITE_SCALE * zoom);
+    drawPipSprite(c, { fill, stroke, eyes });
+    c.restore();
+    return cv;
+  }
+  const combos = [
+    { label: "default (black / black)", fill: "black", stroke: "black" },
+    { label: "red / red", fill: "red", stroke: "red" },
+    { label: "yellow / yellow", fill: "yellow", stroke: "yellow" },
+    { label: "black / black", fill: "black", stroke: "black" },
+    { label: "white / white on black bgcolor", fill: "white", stroke: "white", bg: "#000" },
+    { label: "skyblue fill / navy pen", fill: "skyblue", stroke: "navy" },
+    { label: "eyes closed (the idle blink frame)", fill: "black", stroke: "black", eyes: "closed" },
+  ];
+  const combosEl = document.getElementById("combos");
+  for (const k of combos) {
+    const wrap = document.createElement("div"); wrap.className = "cell";
+    const box = document.createElement("div"); box.className = "box"; box.style.gap = "8px"; box.style.padding = "8px"; box.style.background = k.bg || "#fff";
+    box.appendChild(spriteCanvas({ ...k, zoom: 1 }));
+    box.appendChild(spriteCanvas({ ...k, zoom: 4 }));
+    wrap.appendChild(box);
+    const l = document.createElement("div"); l.className = "label"; l.textContent = k.label; wrap.appendChild(l);
+    combosEl.appendChild(wrap);
+  }
+  const hEl = document.getElementById("headings");
+  for (const h of [0, 90, 180, 270]) {
+    const wrap = document.createElement("div"); wrap.className = "cell";
+    const box = document.createElement("div"); box.className = "box"; box.style.padding = "8px"; box.style.gap = "8px";
+    box.appendChild(spriteCanvas({ fill: "black", stroke: "black", heading: h }));
+    box.appendChild(spriteCanvas({ fill: "black", stroke: "black", heading: h, zoom: 3 }));
+    wrap.appendChild(box);
+    const l = document.createElement("div"); l.className = "label"; l.textContent = "heading " + h; wrap.appendChild(l);
+    hEl.appendChild(wrap);
+  }
+
+  // stamps
+  const st = document.getElementById("stamps");
+  st.innerHTML =
+    cell(`<div style="padding:12px">${stampSVG({ done: false, label: "6", size: 48 })}</div>`, "empty, lesson 6 · 48px", "paper") +
+    cell(`<div style="padding:12px">${stampSVG({ done: true, label: "6", size: 48 })}</div>`, "stamped · 48px", "paper") +
+    cell(`<div style="padding:12px">${stampSVG({ done: false, challenge: true, size: 48 })}</div>`, "empty challenge · 48px", "paper") +
+    cell(`<div style="padding:12px">${stampSVG({ done: true, challenge: true, size: 48 })}</div>`, "stamped challenge · 48px", "paper") +
+    cell(`<div style="padding:12px" class="stamps">${[1,1,0,0,1,0,0,0,0,0,0,0,0,0].map((d) => stampSVG({ done: !!d, size: 10 })).join("")}${[0,0,0,0,0,0].map(() => stampSVG({ done: false, challenge: true, size: 10 })).join("")}</div>`, "header strip at 10px", "paper") +
+    cell(`<div style="padding:12px" class="stamps">${[1,1,0,0,1,0,0,0,0,0,0,0,0,0].map((d) => stampSVG({ done: !!d, size: 8 })).join("")}${[0,0,0,0,0,0].map(() => stampSVG({ done: false, challenge: true, size: 8 })).join("")}</div>`, "narrow header strip at 8px", "paper");
+
+  // faces
+  document.getElementById("faces").innerHTML =
+    cell(`<div style="padding:12px">${faceSVG("happy", 32)}</div>`, "happy · done banner", "paper") +
+    cell(`<div style="padding:12px">${faceSVG("thinking", 32)}</div>`, "thinking · nudge banner", "paper") +
+    cell(`<div style="padding:12px">${faceSVG("oops", 32)}</div>`, "oops · error", "paper") +
+    cell(`<div style="padding:12px">${faceSVG("happy", 96)}${faceSVG("thinking", 96)}${faceSVG("oops", 96)}</div>`, "the three at 96px", "paper");
+  document.getElementById("banners").innerHTML =
+    `<div class="banner pass">${faceSVG("happy", 32)}<div><b>That's it. Lesson done.</b>Draw a square using a for loop.</div></div>` +
+    `<div class="banner nudge">${faceSVG("thinking", 32)}<div><b>It ran. Not finished yet.</b>Now add a backward(50) line.</div></div>` +
+    `<div class="banner error">${faceSVG("oops", 32)}<div><b>Python doesn't know the word foward on line 3</b>Did you mean forward? Python needs the exact spelling.</div></div>`;
+</script>
+</body>
+</html>
