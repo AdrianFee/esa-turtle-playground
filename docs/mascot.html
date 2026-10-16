@@ -24,6 +24,7 @@
     .banner.nudge { background: var(--warn-wash); box-shadow: inset 0 0 0 2px var(--warn); } .banner.nudge b { color: var(--warn); }
     .banner.error { background: var(--error-wash); box-shadow: inset 4px 0 0 var(--error); } .banner.error b { color: var(--error); }
     .banner svg { flex: none; margin-top: 2px; }
+    .btn-sample { display: inline-block; font-family: Fredoka, sans-serif; font-weight: 600; font-size: 16px; color: #fff; background: var(--accent); border: 2px solid var(--accent-deep); box-shadow: 0 3px 0 var(--accent-deep); border-radius: 12px; padding: 9px 14px; }
     .header-sample { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); width: max-content; }
     .header-sample .name { font-family: Fredoka, sans-serif; font-weight: 600; font-size: 22px; }
     .stamps { display: inline-flex; gap: 2px; }
@@ -85,9 +86,11 @@
     { label: "default (black / black)", fill: "black", stroke: "black" },
     { label: "red / red", fill: "red", stroke: "red" },
     { label: "yellow / yellow", fill: "yellow", stroke: "yellow" },
-    { label: "black / black", fill: "black", stroke: "black" },
     { label: "white / white on black bgcolor", fill: "white", stroke: "white", bg: "#000" },
     { label: "skyblue fill / navy pen", fill: "skyblue", stroke: "navy" },
+    { label: "green / green (head is Pip-green)", fill: "green", stroke: "green" },
+    { label: "darkgreen / darkgreen", fill: "darkgreen", stroke: "darkgreen" },
+    { label: "lime / lime", fill: "lime", stroke: "lime" },
     { label: "eyes closed (the idle blink frame)", fill: "black", stroke: "black", eyes: "closed" },
   ];
   const combosEl = document.getElementById("combos");
@@ -100,6 +103,38 @@
     const l = document.createElement("div"); l.className = "label"; l.textContent = k.label; wrap.appendChild(l);
     combosEl.appendChild(wrap);
   }
+  // Sprite on top of a dense drawing: a multicolour spiral at pensize(10).
+  function spiralCanvas(zoom) {
+    const px = 160 * zoom;
+    const cv = document.createElement("canvas");
+    cv.width = px * dpr; cv.height = px * dpr; cv.style.width = px + "px"; cv.style.height = px + "px";
+    const c = cv.getContext("2d");
+    c.fillStyle = "#fff"; c.fillRect(0, 0, cv.width, cv.height);
+    const colours = ["red", "orange", "gold", "lime", "deepskyblue", "blue", "purple", "magenta"];
+    const k = dpr * zoom, cx = cv.width / 2, cy = cv.height / 2;
+    let x = 0, y = 0, h = 0;
+    c.lineWidth = 10 * k; c.lineCap = "round";
+    for (let i = 0; i < 60; i++) {
+      const len = 2 + i * 2.2;
+      const nx = x + Math.cos(h) * len, ny = y - Math.sin(h) * len;
+      c.beginPath(); c.moveTo(cx + x * k, cy + y * k); c.lineTo(cx + nx * k, cy + ny * k);
+      c.strokeStyle = colours[i % colours.length]; c.stroke();
+      x = nx; y = ny; h += Math.PI / 2 * 1.01;
+    }
+    c.save();
+    c.translate(cx, cy);
+    c.scale(k * SPRITE_SCALE, k * SPRITE_SCALE);
+    drawPipSprite(c, { fill: "black", stroke: "black" });
+    c.restore();
+    return cv;
+  }
+  const dense = document.createElement("div"); dense.className = "cell";
+  const denseBox = document.createElement("div"); denseBox.className = "box"; denseBox.style.gap = "8px"; denseBox.style.padding = "8px"; denseBox.style.alignItems = "flex-start";
+  denseBox.appendChild(spiralCanvas(1)); denseBox.appendChild(spiralCanvas(4));
+  dense.appendChild(denseBox);
+  const denseLabel = document.createElement("div"); denseLabel.className = "label"; denseLabel.textContent = "on a pensize(10) multicolour spiral, actual size and 4×"; dense.appendChild(denseLabel);
+  combosEl.appendChild(dense);
+
   const hEl = document.getElementById("headings");
   for (const h of [0, 90, 180, 270]) {
     const wrap = document.createElement("div"); wrap.className = "cell";
@@ -128,7 +163,7 @@
     cell(`<div style="padding:12px">${faceSVG("oops", 32)}</div>`, "oops · error", "paper") +
     cell(`<div style="padding:12px">${faceSVG("happy", 96)}${faceSVG("thinking", 96)}${faceSVG("oops", 96)}</div>`, "the three at 96px", "paper");
   document.getElementById("banners").innerHTML =
-    `<div class="banner pass">${faceSVG("happy", 32)}<div><b>That's it. Lesson done.</b>Draw a square using a for loop.</div></div>` +
+    `<div class="banner pass">${faceSVG("happy", 32)}<div><b>That's it. Lesson done.</b>Draw a square using a for loop.<div style="margin-top:8px"><span class="btn-sample">Next: lesson 7, Triangles and angles</span></div></div></div>` +
     `<div class="banner nudge">${faceSVG("thinking", 32)}<div><b>It ran. Not finished yet.</b>Now add a backward(50) line.</div></div>` +
     `<div class="banner error">${faceSVG("oops", 32)}<div><b>Python doesn't know the word foward on line 3</b>Did you mean forward? Python needs the exact spelling.</div></div>`;
 </script>

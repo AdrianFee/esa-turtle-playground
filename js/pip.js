@@ -29,6 +29,7 @@ export const PIP = {
 const G = {
   shell: { cx: 0, cy: 1.5, rx: 9, ry: 10.5 },
   head: { cx: 0, cy: -13, rx: 4.6, ry: 5.2 },
+  patch: { cx: 0, cy: -13.5, rx: 3.4, ry: 3.7 },   // cream face patch: keeps the face readable when the shell is green too
   eyes: [[-1.9, -14.2], [1.9, -14.2]],
   eyeR: 1.2,
   mouth: { cx: 0, cy: -11.4, r: 1.7 },
@@ -78,7 +79,10 @@ export function drawPipSprite(c, { fill = "black", stroke = "black", eyes = "ope
   c.strokeStyle = "rgba(255,255,255,0.5)"; c.lineWidth = 1.7; c.stroke();
   c.strokeStyle = "rgba(30,36,48,0.45)"; c.lineWidth = 0.8; c.stroke();
 
-  // Face.
+  // Cream face patch, then the face.
+  c.beginPath();
+  ell(G.patch.cx, G.patch.cy, G.patch.rx, G.patch.ry, 0);
+  c.fillStyle = PIP.cream; c.fill();
   if (eyes === "closed") {
     c.beginPath();
     for (const [x, y] of G.eyes) { c.moveTo(x - 1.2, y); c.lineTo(x + 1.2, y); }
@@ -122,7 +126,7 @@ function headSVG(state) {
   const limbAttrs = `fill="${PIP.limb}" stroke="${PIP.ink}" stroke-width="${G.outline}"`;
   const eyes = [[-2.1, -1.4], [2.1, -1.4]];
   const mouth = { cx: 0, cy: 1.5, r: 1.7 };
-  return ellSVG(0, 0, 5.2, 5.6, 0, limbAttrs) + faceParts(state, eyes, mouth, 1);
+  return ellSVG(0, 0, 5.2, 5.6, 0, limbAttrs) + ellSVG(0, -0.4, 3.9, 4.2, 0, `fill="${PIP.cream}"`) + faceParts(state, eyes, mouth, 1);
 }
 
 /* The face, shared by the sprite (top-down) and the banner face (front
@@ -183,17 +187,18 @@ export function faceSVG(state = "happy", size = 32) {
   if (state === "oops") extras = `<text x="6.5" y="-5" font-family="Fredoka, 'Atkinson Hyperlegible Next', sans-serif" font-weight="600" font-size="8" fill="${PIP.ink}">?</text>`;
   return `<svg class="pip-face" data-state="${state}" viewBox="-10 -10 20 20" width="${size}" height="${size}" aria-hidden="true">` +
     `<circle cx="0" cy="0.4" r="7.4" fill="${PIP.limb}" stroke="${PIP.ink}" stroke-width="1.3"/>` +
+    `<ellipse cx="0" cy="0.2" rx="5.5" ry="5.7" fill="${PIP.cream}"/>` +
     faceParts(state, eyes, mouth, k) + extras + `</svg>`;
 }
 
 /** A passport stamp. Empty: a dashed ring with the lesson number. Stamped: sun disc, green ring, Pip's footprint. */
 export function stampSVG({ done = false, label = "", size = 40, challenge = false } = {}) {
   const shape = challenge
-    ? `<rect x="4" y="4" width="32" height="32" rx="8"`
-    : `<circle cx="20" cy="20" r="16"`;
+    ? `<rect x="5" y="5" width="30" height="30" rx="8"`
+    : `<circle cx="20" cy="20" r="15.5"`;
   if (!done) {
     return `<svg class="stamp-svg" viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">` +
-      `${shape} fill="none" stroke="${PIP.soft}" stroke-width="2.2" stroke-dasharray="4 3"/>` +
+      `${shape} fill="none" stroke="${PIP.soft}" stroke-width="4" stroke-dasharray="5 3.5"/>` +
       (label ? `<text x="20" y="25" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="600" font-size="14" fill="${PIP.soft}">${label}</text>` : "") +
       `</svg>`;
   }
@@ -201,5 +206,5 @@ export function stampSVG({ done = false, label = "", size = 40, challenge = fals
   const foot = `<ellipse cx="20" cy="23" rx="5" ry="4.2" fill="${PIP.ink}"/>` +
     [[-6, 16.5], [-2.2, 14], [2.2, 14], [6, 16.5]].map(([dx, y]) => `<circle cx="${20 + dx}" cy="${y}" r="2" fill="${PIP.ink}"/>`).join("");
   return `<svg class="stamp-svg is-done" viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">` +
-    `${shape} fill="${PIP.sun}" stroke="${PIP.accent}" stroke-width="3"/>` + foot + `</svg>`;
+    `${shape} fill="${PIP.sun}" stroke="${PIP.accent}" stroke-width="5"/>` + foot + `</svg>`;
 }
