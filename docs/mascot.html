@@ -20,6 +20,7 @@
     canvas { display: block; }
     .banner { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 10px; max-width: 420px; font-size: 17px; }
     .banner b { display: block; font-size: 18px; margin-bottom: 2px; }
+    code { font-family: "Atkinson Hyperlegible Mono", monospace; font-size: 0.94em; background: #f0e8d8; padding: 1px 5px; border-radius: 3px; }
     .banner.pass { background: var(--accent-wash); box-shadow: inset 0 0 0 2px var(--accent-deep); } .banner.pass b { color: var(--accent-deep); }
     .banner.nudge { background: var(--warn-wash); box-shadow: inset 0 0 0 2px var(--warn); } .banner.nudge b { color: var(--warn); }
     .banner.error { background: var(--error-wash); box-shadow: inset 4px 0 0 var(--error); } .banner.error b { color: var(--error); }
@@ -42,17 +43,18 @@
   <div style="margin-top: 24px" class="row"><div class="cell"><div class="header-sample" id="headerSample"></div><div class="label">in the header at 40px</div></div></div>
 
   <h2>2. Canvas sprite, actual size on white</h2>
-  <p class="note">Drawn exactly as the canvas will draw it (sprite scale 1.35 at this screen's pixel ratio). Shell = fill colour, shell outline = pen colour, head/legs/tail always Pip-green with an ink outline and a pale halo. Each pair is shown at actual size and at 4× for inspection.</p>
+  <p class="note">Drawn exactly as the canvas will draw it (sprite scale 1.35 at this screen's pixel ratio). Shell = fill colour, shell outline = pen colour, head/legs/tail always Pip-green with an ink outline and a pale halo. Each pair is shown at actual size and at 4× for inspection. Under 48px the shell keeps only its central hexagon (no spokes); the 4× views show the full shell.</p>
   <div class="row" id="combos"></div>
 
   <h2>3. Headings 0, 90, 180, 270</h2>
   <div class="row" id="headings"></div>
 
   <h2>4. Passport stamp</h2>
-  <p class="note">Empty: a dashed ring with the lesson number. Stamped: a sun-yellow disc with a green ring and Pip's footprint. Challenges are rounded squares. At header size (10px, 8px at narrow widths) the stamped one reads as a green-ringed yellow dot, the empty one as a grey ring.</p>
+  <p class="note">Empty: a dashed ring with the lesson number. Stamped: a sun-yellow disc with a green ring and a shell hexagon. Challenges are rounded squares. At header size (10px, 8px at narrow widths) the stamped one reads as a green-ringed yellow dot, the empty one as a grey ring.</p>
   <div class="row" id="stamps"></div>
 
   <h2>5. Banner faces</h2>
+  <p class="note">Happy for done. "Nearly there" for nudges: eyes forward with a glance aside, one brow raised, a small closed smile and a sparkle. Oops for errors: puzzled, with a question mark. Nothing flat or downturned.</p>
   <div class="row" id="faces"></div>
   <div class="row" id="banners" style="margin-top: 16px; align-items: flex-start"></div>
 
@@ -78,7 +80,7 @@
     c.translate(cv.width / 2, cv.height / 2);
     c.rotate(-(heading - 90) * Math.PI / 180);
     c.scale(dpr * SPRITE_SCALE * zoom, dpr * SPRITE_SCALE * zoom);
-    drawPipSprite(c, { fill, stroke, eyes });
+    drawPipSprite(c, { fill, stroke, eyes, detail: 20 * SPRITE_SCALE * zoom < 48 ? "simple" : "full" });
     c.restore();
     return cv;
   }
@@ -124,7 +126,7 @@
     c.save();
     c.translate(cx, cy);
     c.scale(k * SPRITE_SCALE, k * SPRITE_SCALE);
-    drawPipSprite(c, { fill: "black", stroke: "black" });
+    drawPipSprite(c, { fill: "black", stroke: "black", detail: zoom < 2 ? "simple" : "full" });
     c.restore();
     return cv;
   }
@@ -165,7 +167,7 @@
   document.getElementById("banners").innerHTML =
     `<div class="banner pass">${faceSVG("happy", 32)}<div><b>That's it. Lesson done.</b>Draw a square using a for loop.<div style="margin-top:8px"><span class="btn-sample">Next: lesson 7, Triangles and angles</span></div></div></div>` +
     `<div class="banner nudge">${faceSVG("thinking", 32)}<div><b>It ran. Not finished yet.</b>Now add a backward(50) line.</div></div>` +
-    `<div class="banner error">${faceSVG("oops", 32)}<div><b>Python doesn't know the word foward on line 3</b>Did you mean forward? Python needs the exact spelling.</div></div>`;
+    `<div class="banner error">${faceSVG("oops", 32)}<div><b>Python doesn't know the word <code>foward</code> on line 3</b>Did you mean <code>forward</code>? Python needs the exact spelling.</div></div>`;
 </script>
 </body>
 </html>

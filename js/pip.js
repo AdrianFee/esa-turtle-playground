@@ -35,7 +35,7 @@ const G = {
   mouth: { cx: 0, cy: -11.4, r: 1.7 },
   legs: [[-7.5, -5.5, Math.PI / 4], [7.5, -5.5, -Math.PI / 4], [-7.5, 7.5, -Math.PI / 4], [7.5, 7.5, Math.PI / 4]],
   leg: { rx: 5.2, ry: 3.3 },
-  tail: [[-2.6, 9], [0, 17], [2.6, 9]],
+  tail: { cx: 0, cy: 12.6, rx: 2.3, ry: 3.4 },   // short rounded stub; only the head points
   hex: [[0, -5.5], [4.8, -2.7], [4.8, 2.7], [0, 5.5], [-4.8, 2.7], [-4.8, -2.7]],
   rim: [[0, -9.8], [7.6, -4.4], [7.6, 6.6], [0, 11.3], [-7.6, 6.6], [-7.6, -4.4]],
   outline: 1.3,
@@ -44,7 +44,9 @@ const G = {
 
 // ---------------------------------------------------------------- canvas
 
-export function drawPipSprite(c, { fill = "black", stroke = "black", eyes = "open" } = {}) {
+/* detail: "full" draws the shell hexagon with spokes; "simple" (for anything
+   rendered under about 48px) keeps just the central hexagon. */
+export function drawPipSprite(c, { fill = "black", stroke = "black", eyes = "open", detail = "full" } = {}) {
   const ell = (x, y, rx, ry, rot) => {
     c.moveTo(x + rx * Math.cos(rot), y + rx * Math.sin(rot));
     c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
@@ -58,7 +60,7 @@ export function drawPipSprite(c, { fill = "black", stroke = "black", eyes = "ope
   // Legs, tail and head: always Pip-green with an ink outline.
   c.beginPath();
   for (const [x, y, rot] of G.legs) ell(x, y, G.leg.rx, G.leg.ry, rot);
-  c.moveTo(G.tail[0][0], G.tail[0][1]); c.lineTo(G.tail[1][0], G.tail[1][1]); c.lineTo(G.tail[2][0], G.tail[2][1]); c.closePath();
+  ell(G.tail.cx, G.tail.cy, G.tail.rx, G.tail.ry, 0);
   ell(G.head.cx, G.head.cy, G.head.rx, G.head.ry, 0);
   c.fillStyle = PIP.limb; c.fill();
   outline(PIP.ink);
@@ -75,7 +77,9 @@ export function drawPipSprite(c, { fill = "black", stroke = "black", eyes = "ope
   c.moveTo(G.hex[0][0], G.hex[0][1] + cy);
   for (let i = 1; i < 6; i++) c.lineTo(G.hex[i][0], G.hex[i][1] + cy);
   c.closePath();
-  for (let i = 0; i < 6; i++) { c.moveTo(G.hex[i][0], G.hex[i][1] + cy); c.lineTo(G.rim[i][0], G.rim[i][1] + cy); }
+  if (detail !== "simple") {
+    for (let i = 0; i < 6; i++) { c.moveTo(G.hex[i][0], G.hex[i][1] + cy); c.lineTo(G.rim[i][0], G.rim[i][1] + cy); }
+  }
   c.strokeStyle = "rgba(255,255,255,0.5)"; c.lineWidth = 1.7; c.stroke();
   c.strokeStyle = "rgba(30,36,48,0.45)"; c.lineWidth = 0.8; c.stroke();
 
@@ -110,14 +114,15 @@ const ellSVG = (x, y, rx, ry, deg, attrs) => `<ellipse cx="${x}" cy="${y}" rx="$
 function limbsSVG() {
   const limbAttrs = `fill="${PIP.limb}" stroke="${PIP.ink}" stroke-width="${G.outline}" stroke-linejoin="round"`;
   const legs = G.legs.map(([x, y, rot]) => ellSVG(x, y, G.leg.rx, G.leg.ry, rot * 180 / Math.PI, limbAttrs)).join("");
-  const tail = `<polygon points="${G.tail.map((p) => p.join(",")).join(" ")}" ${limbAttrs}/>`;
+  const tail = ellSVG(G.tail.cx, G.tail.cy, G.tail.rx, G.tail.ry, 0, limbAttrs);
   return legs + tail;
 }
 
-function shellSVG(shell, pen) {
+function shellSVG(shell, pen, simple) {
   const shellEl = ellSVG(G.shell.cx, G.shell.cy, G.shell.rx, G.shell.ry, 0, `fill="${shell}" stroke="${pen}" stroke-width="${G.outline}"`);
   const cy = G.shell.cy;
-  const d = `M${G.hex.map((p) => `${p[0]},${p[1] + cy}`).join(" L")} Z ${G.hex.map((p, i) => `M${p[0]},${p[1] + cy} L${G.rim[i][0]},${G.rim[i][1] + cy}`).join(" ")}`;
+  const spokes = simple ? "" : " " + G.hex.map((p, i) => `M${p[0]},${p[1] + cy} L${G.rim[i][0]},${G.rim[i][1] + cy}`).join(" ");
+  const d = `M${G.hex.map((p) => `${p[0]},${p[1] + cy}`).join(" L")} Z${spokes}`;
   return shellEl + `<path d="${d}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.7"/><path d="${d}" fill="none" stroke="rgba(30,36,48,0.45)" stroke-width="0.8"/>`;
 }
 
@@ -147,11 +152,11 @@ function faceParts(state, eyes, mouth, k) {
     out += `<path d="M${lx - 1.3 * k},${ly - 2.3 * k} l${2.4 * k},${-0.5 * k} M${rx - 1.1 * k},${ry - 3.3 * k} l${2.4 * k},${0.3 * k}" fill="none" stroke="${ink}" stroke-width="${0.9 * k}" stroke-linecap="round"/>`;
     out += `<circle cx="${mouth.cx + 0.6 * k}" cy="${mouth.cy + 0.2 * k}" r="${1 * k}" fill="none" stroke="${ink}" stroke-width="${0.8 * k}"/>`;
   } else if (state === "thinking") {
-    // Eyes up and to one side, one brow raised, a flat little mouth: "hmm".
-    out += `<circle cx="${lx}" cy="${ly}" r="${r}" fill="${ink}"/><circle cx="${rx}" cy="${ry}" r="${r}" fill="${ink}"/>`;
-    out += `<circle cx="${lx - 0.35 * k}" cy="${ly - 0.5 * k}" r="${0.42 * k}" fill="#ffffff"/><circle cx="${rx - 0.35 * k}" cy="${ry - 0.5 * k}" r="${0.42 * k}" fill="#ffffff"/>`;
-    out += `<path d="M${rx - 1.2 * k},${ry - 2.9 * k} l${2.4 * k},${-0.4 * k}" fill="none" stroke="${ink}" stroke-width="${0.9 * k}" stroke-linecap="round"/>`;
-    out += `<path d="M${mouth.cx - 1.4 * k},${mouth.cy + 0.6 * k} l${2.8 * k},0" fill="none" stroke="${ink}" stroke-width="${0.8 * k}" stroke-linecap="round"/>`;
+    // "Nearly there": eyes forward with a glance to the side, one brow raised, a small closed smile.
+    out += `<circle cx="${lx + 0.3 * k}" cy="${ly}" r="${r}" fill="${ink}"/><circle cx="${rx + 0.3 * k}" cy="${ry}" r="${r}" fill="${ink}"/>`;
+    out += `<circle cx="${lx - 0.1 * k}" cy="${ly - 0.45 * k}" r="${0.42 * k}" fill="#ffffff"/><circle cx="${rx - 0.1 * k}" cy="${ry - 0.45 * k}" r="${0.42 * k}" fill="#ffffff"/>`;
+    out += `<path d="M${rx - 1.2 * k},${ry - 2.8 * k} q${1.2 * k},${-0.9 * k} ${2.4 * k},${-0.2 * k}" fill="none" stroke="${ink}" stroke-width="${0.9 * k}" stroke-linecap="round"/>`;
+    out += `<path d="M${mouth.cx - 1.3 * k},${mouth.cy + 0.2 * k} q${1.3 * k},${1.6 * k} ${2.6 * k},0" fill="none" stroke="${ink}" stroke-width="${0.8 * k}" stroke-linecap="round"/>`;
   } else {
     // idle and running: open eyes with a highlight, small smile.
     const dy = state === "running" ? -0.4 * k : 0;
@@ -175,7 +180,7 @@ export function pipSVG({ state = "idle", size = 40, shell = PIP.limbDark, pen = 
   return `<svg class="pip ${cls}" data-state="${state}" viewBox="-21 -21 42 42" width="${size}" height="${size}" aria-hidden="true">` +
     `<g class="pip-body"><g transform="rotate(90)">${limbsSVG()}</g>` +
     `<g class="pip-head" transform="translate(13.5 0)">${headSVG(state)}</g>` +
-    `<g transform="rotate(90)">${shellSVG(shell, pen)}</g></g>${extras}</svg>`;
+    `<g transform="rotate(90)">${shellSVG(shell, pen, size < 48)}</g></g>${extras}</svg>`;
 }
 
 /** Pip's face, front view, for the done / nudge / error banners. States: happy, thinking, oops. */
@@ -185,13 +190,14 @@ export function faceSVG(state = "happy", size = 32) {
   const k = 1.15;
   let extras = "";
   if (state === "oops") extras = `<text x="6.5" y="-5" font-family="Fredoka, 'Atkinson Hyperlegible Next', sans-serif" font-weight="600" font-size="8" fill="${PIP.ink}">?</text>`;
+  if (state === "thinking") extras = `<path d="M7.2,-8.4 l0.7,1.6 1.6,0.7 -1.6,0.7 -0.7,1.6 -0.7,-1.6 -1.6,-0.7 1.6,-0.7 z" fill="${PIP.sun}" stroke="${PIP.ink}" stroke-width="0.5" stroke-linejoin="round"/>`;
   return `<svg class="pip-face" data-state="${state}" viewBox="-10 -10 20 20" width="${size}" height="${size}" aria-hidden="true">` +
     `<circle cx="0" cy="0.4" r="7.4" fill="${PIP.limb}" stroke="${PIP.ink}" stroke-width="1.3"/>` +
     `<ellipse cx="0" cy="0.2" rx="5.5" ry="5.7" fill="${PIP.cream}"/>` +
     faceParts(state, eyes, mouth, k) + extras + `</svg>`;
 }
 
-/** A passport stamp. Empty: a dashed ring with the lesson number. Stamped: sun disc, green ring, Pip's footprint. */
+/** A passport stamp. Empty: a dashed ring with the lesson number. Stamped: sun disc, green ring, a shell hexagon. */
 export function stampSVG({ done = false, label = "", size = 40, challenge = false } = {}) {
   const shape = challenge
     ? `<rect x="5" y="5" width="30" height="30" rx="8"`
@@ -202,9 +208,8 @@ export function stampSVG({ done = false, label = "", size = 40, challenge = fals
       (label ? `<text x="20" y="25" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="600" font-size="14" fill="${PIP.soft}">${label}</text>` : "") +
       `</svg>`;
   }
-  // footprint: a pad and four toes
-  const foot = `<ellipse cx="20" cy="23" rx="5" ry="4.2" fill="${PIP.ink}"/>` +
-    [[-6, 16.5], [-2.2, 14], [2.2, 14], [6, 16.5]].map(([dx, y]) => `<circle cx="${20 + dx}" cy="${y}" r="2" fill="${PIP.ink}"/>`).join("");
+  // glyph: one shell hexagon. Dropped under 24px so the small header dots stay yellow.
+  const foot = size < 24 ? "" : `<path d="M20,13 L26.9,17 L26.9,25 L20,29 L13.1,25 L13.1,17 Z" fill="${PIP.ink}"/>`;
   return `<svg class="stamp-svg is-done" viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">` +
     `${shape} fill="${PIP.sun}" stroke="${PIP.accent}" stroke-width="5"/>` + foot + `</svg>`;
 }
