@@ -10,13 +10,14 @@
     /* Same tokens as css/style.css; kept inline so the page stands alone. */
     :root {
       --paper: #f4f1ea; --surface: #fffdf8; --paper-deep: #e9e4d8; --rule: #d6d0c2;
-      --ink: #1b1a17; --ink-soft: #625d53; --ink-faint: #9b958a; --accent: #11704d; --warn: #8c6a10;
+      --ink: #1e2430; --ink-soft: #4a5160; --ink-mute: #5f6775; --accent: #11704d; --focus: #1a56b0;
       --font: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
       --mono: "Atkinson Hyperlegible Mono", "SF Mono", Menlo, Consolas, monospace;
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: var(--font); font-size: 17px; line-height: 1.5; color: var(--ink); background: var(--paper); }
     a { color: var(--accent); text-underline-offset: 3px; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
     code { font-family: var(--mono); font-size: 0.94em; background: var(--paper-deep); padding: 1px 5px; border-radius: 3px; }
     pre { font-family: var(--mono); font-size: 15px; line-height: 1.5; margin: 0; padding: 12px 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 2px; overflow: auto; }
     p { margin: 0 0 12px; }
@@ -77,6 +78,7 @@
     <p><b>Differences from Thonny.</b> <code>input()</code> and <code>textinput()</code> are not supported (a friendly message says so). Keyboard and mouse events (<code>onkey</code>, <code>onclick</code>) are accepted but do nothing. Everything else that students at this level use behaves the same, and the <b>Download .py</b> button adds <code>done()</code> so the file runs in Thonny.</p>
     <p><b>Error messages.</b> Python errors are translated into plain English with the offending line highlighted. The original Python error is always available under "Python's own words", so students still learn the real names (SyntaxError, NameError, IndentationError).</p>
     <p><b>Completion checks.</b> Each lesson has light-touch checks (listed below) that look at the code and at what was drawn. They are deliberately generous: the point is encouragement, not grading. Passing a check shows a button to the next lesson and marks the lesson with a tick in the lesson list.</p>
+    <p><b>Versions.</b> The Python inside the page is Pyodide 0.28.3, which ships CPython 3.13. The status in the playground header just says "Ready to code"; hovering it shows the Pyodide version. The version is pinned in <code>js/app.js</code> (<code>PYODIDE_VERSION</code>) and in <code>scripts/vendor_pyodide.sh</code>.</p>
     <p><b>Adding lessons.</b> Edit <code>js/lessons.js</code>. Each lesson is a small object with starter code, hints, a solution and checks; the comment at the top of the file lists the check types.</p>
   </div>
   <nav id="nav"></nav>

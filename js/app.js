@@ -509,6 +509,16 @@ function buildPalette() {
     b.setAttribute("aria-selected", "false");
     b.textContent = label;
     b.addEventListener("click", () => showTab(key));
+    b.addEventListener("keydown", (e) => {
+      // Arrow keys move between tabs, as a tablist should.
+      const i = TAB_KEYS.indexOf(key);
+      let next = null;
+      if (e.key === "ArrowRight") next = TAB_KEYS[(i + 1) % TAB_KEYS.length];
+      if (e.key === "ArrowLeft") next = TAB_KEYS[(i - 1 + TAB_KEYS.length) % TAB_KEYS.length];
+      if (e.key === "Home") next = TAB_KEYS[0];
+      if (e.key === "End") next = TAB_KEYS[TAB_KEYS.length - 1];
+      if (next) { e.preventDefault(); showTab(next); document.querySelector(`.pal-tab[data-tab="${next}"]`).focus(); }
+    });
     tabs.appendChild(b);
   };
   for (const group of PALETTE) {
