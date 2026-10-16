@@ -493,7 +493,7 @@ function updateTabScrollCue() {
 
 function buildPalette() {
   const root = $("#palette");
-  const help = (text) => { $("#palHelp").textContent = text; };
+  const help = (html) => { $("#palHelp").innerHTML = html; };
   const tabs = document.createElement("div");
   tabs.className = "pal-tabs";
   tabs.setAttribute("role", "tablist");
@@ -536,9 +536,10 @@ function buildPalette() {
       b.className = "pal-item";
       b.textContent = it.label;
       b.title = it.help;
-      b.addEventListener("click", () => { help(it.help); insertSnippet(it.snippet, it.block); });
-      b.addEventListener("mouseenter", () => help(it.help));
-      b.addEventListener("focus", () => help(it.help));
+      const text = escapeHtml(it.help);
+      b.addEventListener("click", () => { help(text); insertSnippet(it.snippet, it.block); });
+      b.addEventListener("mouseenter", () => help(text));
+      b.addEventListener("focus", () => help(text));
       wrap.appendChild(b);
     }
     sec.appendChild(wrap);
@@ -559,7 +560,8 @@ function buildPalette() {
     b.style.background = c;
     b.title = c;
     b.setAttribute("aria-label", c);
-    const text = `"${c}". Click to put the colour's name in your code.`;
+    // Always the exact Python string the click inserts, in code style, plus how to use it.
+    const text = `Puts <code>"${c}"</code> in your code. Use it like <code>color("${c}")</code>.`;
     b.addEventListener("click", () => { help(text); editor.replaceSelection(`"${c}"`, "end"); editor.focus(); });
     b.addEventListener("mouseenter", () => help(text));
     b.addEventListener("focus", () => help(text));
