@@ -1,0 +1,5 @@
+vendor/pyodide/
+vendor/codemirror/
+.DS_Store
+__pycache__/
+.playwright-mcp/

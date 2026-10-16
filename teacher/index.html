@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teacher notes · ESA Turtle Playground</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐢</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#1f2a37; --muted:#5b6b7f; --line:#dbe4ef; --brand:#1f9d6b; --mono:"Fira Code",Menlo,Consolas,monospace; }
+    body { font-family: "Nunito", system-ui, sans-serif; color: var(--ink); background:#f2f6fb; margin:0; line-height:1.5; }
+    header { background: linear-gradient(90deg,#0f6b4a,#1f9d6b 60%,#2bb27f); color:white; padding:16px 24px; }
+    header h1 { margin:0; font-size:22px; } header a { color:#ffd166; font-weight:700; }
+    main { max-width: 980px; margin: 0 auto; padding: 20px 24px 60px; }
+    nav { background:white; border:1px solid var(--line); border-radius:12px; padding:12px 16px; margin-bottom:20px; columns: 2; }
+    nav a { display:block; color:#157a52; font-weight:700; text-decoration:none; padding:2px 0; }
+    section { background:white; border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:16px; }
+    section h2 { margin:0 0 4px; } .kind { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:1px; color:var(--brand); }
+    h3 { font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:14px 0 4px; }
+    pre { background:#0f172a; color:#e2e8f0; padding:12px; border-radius:8px; overflow:auto; font-family:var(--mono); font-size:13px; }
+    code { font-family:var(--mono); background:#eef3f9; padding:0 5px; border-radius:5px; font-size:0.92em; }
+    .notes { background:#fff7e6; border-left:4px solid #f59e0b; padding:8px 12px; border-radius:8px; }
+    ul.checks li { margin-bottom:2px; } .intro { background:white; border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:20px; }
+    .cols { display:grid; grid-template-columns: 1fr 1fr; gap:16px; } @media (max-width:760px){ .cols{grid-template-columns:1fr;} nav{columns:1;} }
+  </style>
+</head>
+<body>
+<header><h1>🐢 Teacher notes</h1><a href="../">← Back to the playground</a></header>
+<main>
+  <div class="intro">
+    <p><b>What the playground is.</b> Real CPython running in the browser (via Pyodide) with a drop-in <code>turtle</code> module that draws on a canvas. Nothing is installed and no data leaves the machine. Students' code is saved in their browser's local storage per lesson, so they should use the same computer and browser to pick up where they left off, or use <b>Copy link</b> / <b>Download .py</b> to carry work around.</p>
+    <p><b>Differences from Thonny.</b> <code>input()</code> and <code>textinput()</code> are not supported (a friendly message says so). Keyboard and mouse events (<code>onkey</code>, <code>onclick</code>) are accepted but do nothing. Everything else that students at this level use behaves the same, and the <b>Download .py</b> button adds <code>done()</code> so the file runs in Thonny.</p>
+    <p><b>Error messages.</b> Python errors are translated into plain English with the offending line highlighted. The original Python error is always available under "Python's own words", so students still learn the real names (SyntaxError, NameError, IndentationError).</p>
+    <p><b>Completion checks.</b> Each lesson has light-touch checks (listed below) that look at the code and at what was drawn. They are deliberately generous: the point is encouragement, not grading. Passing a check shows a Next button and marks the lesson with a tick.</p>
+    <p><b>Adding lessons.</b> Edit <code>js/lessons.js</code>. Each lesson is a small object with starter code, hints, a solution and checks; the comment at the top of the file lists the check types.</p>
+  </div>
+  <nav id="nav"></nav>
+  <div id="content"></div>
+</main>
+<script src="../js/lessons.js"></script>
+<script>
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const describeCheck = (c) => ({
+    code_has: `Code matches <code>${esc(c.pattern)}</code>`,
+    moves_min: `At least ${c.n} pen-down lines drawn`,
+    turns: `At least ${c.min} turns of ${c.angle}°`,
+    fills_min: `At least ${c.n} filled shape(s)`,
+    colours_min: `At least ${c.n} different pen colours`,
+    bg_changed: "Background colour changed",
+    equal_sides: `At least ${c.n} lines of equal length`,
+    function_defined: "A function is defined with def",
+    penup_used: "penup() used before a move",
+    dots_min: `At least ${c.n} dots`,
+    circles_min: `At least ${c.n} circle() calls`,
+  }[c.type] || c.type);
+  const render = (l, kind) => `
+    <section id="${l.id}">
+      <div class="kind">${kind}</div>
+      <h2>${l.emoji} ${esc(l.title)}</h2>
+      ${l.concept ? `<h3>Concept</h3><div>${l.concept}</div>` : ""}
+      <h3>Goal</h3><div>${l.goal}</div>
+      ${l.steps ? `<h3>Steps</h3><ol>${l.steps.map(s => `<li>${s}</li>`).join("")}</ol>` : ""}
+      ${l.notes ? `<h3>Teaching notes</h3><div class="notes">${l.notes}</div>` : ""}
+      <div class="cols">
+        <div><h3>Starter code</h3><pre>${esc(l.starter)}</pre></div>
+        <div><h3>Solution</h3><pre>${esc(l.solution)}</pre></div>
+      </div>
+      ${l.hints ? `<h3>Hints (shown one at a time)</h3><ol>${l.hints.map(h => `<li>${h}</li>`).join("")}</ol>` : ""}
+      <h3>Completion checks</h3><ul class="checks">${(l.checks || []).map(c => `<li>${describeCheck(c)} <span style="color:#5b6b7f">— otherwise: ${c.fail}</span></li>`).join("")}</ul>
+    </section>`;
+  const L = window.LESSONS || [], C = window.CHALLENGES || [];
+  document.getElementById("nav").innerHTML =
+    L.map((l, i) => `<a href="#${l.id}">${i + 1}. ${l.emoji} ${esc(l.title)}</a>`).join("") +
+    C.map((l) => `<a href="#${l.id}">Challenge: ${l.emoji} ${esc(l.title)}</a>`).join("");
+  document.getElementById("content").innerHTML =
+    L.map((l, i) => render(l, `Lesson ${i + 1}`)).join("") + C.map((l) => render(l, "Challenge")).join("");
+</script>
+</body>
+</html>
