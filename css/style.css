@@ -342,7 +342,12 @@ p { margin: 0 0 var(--s3); }
   cursor: pointer;
 }
 .pal-tab[aria-selected="true"] { background: var(--surface); color: var(--ink); border-bottom-color: var(--surface); }
-.pal-panels { min-height: var(--toolbox-rows); }
+.pal-panels { position: relative; min-height: var(--toolbox-rows); }
+/* Scroll cue: a fade over the last row, only when the panel really overflows (class set by JS). */
+.pal-panels.is-scrollable::after {
+  content: ""; display: block; position: sticky; bottom: 0; height: 28px; margin-top: -28px;
+  background: linear-gradient(to bottom, rgba(244,241,234,0), var(--paper)); pointer-events: none;
+}
 .pal-group { display: none; }
 .pal-group.is-active { display: block; }
 .pal-group h4 { display: none; }
@@ -363,6 +368,13 @@ p { margin: 0 0 var(--s3); }
 .swatch { width: var(--target); height: var(--target); border-radius: 50%; border: 1px solid rgba(0,0,0,0.18); cursor: pointer; }
 .swatch:hover { transform: scale(1.08); }
 .pal-help { min-height: 28px; font-weight: 500; color: var(--ink); }
+
+/* Short viewports (e.g. 1366x768 at 125% zoom): the chip panel is a fixed two rows plus a
+   peek of the third, scrolling inside, so the canvas keeps the same size on every tab. */
+@media (max-height: 700px) {
+  :root { --toolbox-rows: 112px; }
+  .pal-panels { height: var(--toolbox-rows); overflow-y: auto; }
+}
 
 /* ---------- confetti layer ---------- */
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }

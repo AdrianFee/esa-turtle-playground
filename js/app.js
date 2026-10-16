@@ -469,11 +469,26 @@ function showSolution() {
 // ---------------------------------------------------------------- palette
 const TAB_KEYS = [...PALETTE.map((g) => g.colour), "colours"];
 
+let currentTab = "move";
+
 function showTab(key) {
   if (!TAB_KEYS.includes(key)) key = "move";
-  for (const t of document.querySelectorAll(".pal-tab")) t.setAttribute("aria-selected", String(t.dataset.tab === key));
+  currentTab = key;
+  for (const t of document.querySelectorAll(".pal-tab")) {
+    const on = t.dataset.tab === key;
+    t.setAttribute("aria-selected", String(on));
+    t.tabIndex = on ? 0 : -1;
+  }
   for (const g of document.querySelectorAll(".pal-group")) g.classList.toggle("is-active", g.dataset.tab === key);
   store.set("tab", key);
+  updateTabScrollCue();
+}
+
+function updateTabScrollCue() {
+  const panels = document.querySelector(".pal-panels");
+  if (!panels) return;
+  panels.scrollTop = 0;
+  panels.classList.toggle("is-scrollable", panels.scrollHeight > panels.clientHeight + 1);
 }
 
 function buildPalette() {
@@ -653,6 +668,7 @@ function init() {
   $("#lessonClose").addEventListener("click", () => { openLesson(false); editor.focus(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("lesson-open")) openLesson(false); });
   placeResult();
+  window.addEventListener("resize", updateTabScrollCue);
   NARROW.addEventListener("change", placeResult);
   PHONE.addEventListener("change", placeResult);
 
