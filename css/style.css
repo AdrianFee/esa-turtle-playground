@@ -2,51 +2,38 @@
    ESA Turtle Playground: design brief
    =====================================================================
 
-   Direction: a small, serious tool. The kind of thing a nine-year-old
-   would be proud to have open, not a toy and not a startup. Calm,
-   near-monochrome chrome on warm paper, one accent colour, and the
-   drawing as the hero: the canvas is the only white rectangle on the
-   page, and the student's own colours are the only strong colours.
-   Nothing is a card. Regions are separated by space and a single
-   hairline, hierarchy comes from size and weight.
+   Direction: a playful creative tool for 8 to 12 year olds. Calm enough
+   for a 90 minute club session, never babyish. The drawing is the hero.
 
-   Type: Atkinson Hyperlegible Next for everything the student reads,
-   and Atkinson Hyperlegible Mono for code. One family, designed for
-   legibility (unambiguous I / l / 1, 0 / O), with enough character that
-   it does not read as a default. Minimum 16px. Scale:
-     15  fine print only (footer line, Python's own words)
-     16  base: buttons, toolbox, output, meta
-     17  lesson body, hints, error explanations
-     18  Run button, lesson select
-     20  section labels (Steps, Toolbox, Output)
-     26  lesson title
-     mono 16, line-height 1.6
+   Step 1 (this version) is the LAYOUT RESTRUCTURE. The palette and type
+   below are the interim ones from the previous design; the visual theme
+   (warmer palette, Fredoka display face, block buttons, coloured tabs)
+   lands in step 3 and the mascot in step 4.
 
-   Colour (named roles, nothing else used):
-     paper        #f4f1ea  page background, warm off-white
-     surface      #fffdf8  editor, output, select: barely lighter than paper
-     paper-deep   #e9e4d8  gutter, chips, code in prose
-     rule         #d6d0c2  hairlines
-     ink          #1b1a17  text
-     ink-soft     #625d53  secondary text
-     ink-faint    #9b958a  placeholders, line numbers
-     accent       #11704d  Run, links, progress, done. Green because turtle.
-     error        #b23a2a  error titles and the marked line
-     warn         #8c6a10  "not finished yet" nudges
-   Each state colour has a -wash tint used only on the sticky result
-   banner and the marked error line, never as decoration.
+   Layout rules that everything else depends on:
+   - Fixed-height shell: header 56px, then a workspace that never scrolls
+     the page at desktop sizes. Only the lesson text scrolls, inside its
+     own column.
+   - The toolbox is tabbed by category so only one row-set shows. That is
+     what frees the height for a 44px grid, a 4-line output and an
+     unclipped canvas.
+   - The canvas keeps its native 640x480 coordinate space and is scaled
+     down as a whole to fit its column, never cropped. Height is capped by
+     the space left over after the toolbox, so the toolbox is never
+     clipped at any size.
+   - The editor never changes size when an error appears: errors render
+     inside the fixed-height output box, which scrolls internally.
+   - Wide (>1340px): three columns, lesson | code | drawing.
+     Narrow (<=1340px, covers 1280 laptops, 1024 tablets and 1366 laptops
+     at 125% zoom):
+     two columns, code | drawing, and the lesson column becomes a drawer
+     that slides over the code column. Results appear as a banner above
+     the editor instead of inside the drawer.
+     Phone (<=760px): everything stacks and the page scrolls.
 
-   Spacing scale: 4 8 12 16 24 32 48. Radius: 4px on controls, 2px on
-   surfaces. No shadows anywhere.
-
-   Layout: a fixed-height shell at desktop size. Header 56px with the
-   lesson picker in the middle and a 2px progress hairline along its
-   bottom edge. Three columns: lesson notes (scroll inside), the editor
-   (fills the height, output pinned under it), and the drawing with the
-   toolbox beneath it (column scrolls inside). At 1366x768 Run, the
-   editor, the canvas and the first toolbox rows are all visible without
-   scrolling the page. Under 1100px it becomes two columns, under 760px
-   one column and the page scrolls normally.
+   Type: Atkinson Hyperlegible Next (self-hosted) for text, Atkinson
+   Hyperlegible Mono for code. 16px minimum, 17px lesson body.
+   Spacing scale: 4 8 12 16 24 32. Minimum click target 44px.
    ===================================================================== */
 
 :root {
@@ -65,11 +52,15 @@
   --warn: #8c6a10;
   --warn-wash: #f5eed7;
 
-  --font: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
   --mono: "Atkinson Hyperlegible Mono", "SF Mono", Menlo, Consolas, monospace;
 
-  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
   --header-h: 56px;
+  --row-h: 52px;        /* toolbar row and canvas header: aligned tops */
+  --target: 44px;       /* minimum click target */
+  --output-h: 140px;    /* label + 4 lines */
+  --toolbox-rows: 148px;/* 3 rows of 44px chips + gaps */
 }
 
 /* ---------- base ---------- */
@@ -97,27 +88,27 @@ code {
 }
 pre { font-family: var(--mono); margin: 0; }
 p { margin: 0 0 var(--s3); }
-:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 [hidden] { display: none !important; }
 
 /* ---------- header ---------- */
 .top {
-  position: relative;
   flex: none;
   height: var(--header-h);
   display: flex;
   align-items: center;
-  gap: var(--s5);
+  gap: var(--s4);
   padding: 0 var(--s5);
   border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
 }
-.brand { display: flex; align-items: center; gap: var(--s3); color: var(--ink); text-decoration: none; min-width: 0; }
+.brand { display: flex; align-items: center; gap: var(--s3); color: var(--ink); text-decoration: none; min-width: 0; flex: none; }
 .brand svg { width: 34px; height: 34px; flex: none; }
-.brand-name { font-weight: 800; font-size: 20px; letter-spacing: -0.01em; white-space: nowrap; }
-.brand-sub { color: var(--ink-soft); font-size: 15px; white-space: nowrap; }
+.brand-name { font-weight: 800; font-size: 20px; letter-spacing: -0.01em; }
+.brand-sub { color: var(--ink-soft); font-size: 15px; }
 .brand-sub::before { content: "·"; margin: 0 var(--s2); }
 
-.pick { display: flex; align-items: center; gap: var(--s2); margin-left: auto; }
+.pick { display: flex; align-items: center; gap: var(--s2); margin-left: auto; min-width: 0; flex: 0 1 auto; }
 .pick label { font-weight: 700; color: var(--ink-soft); }
 .pick select {
   appearance: none;
@@ -131,23 +122,24 @@ p { margin: 0 0 var(--s3); }
   border: 1px solid var(--rule);
   border-radius: 4px;
   padding: 0 38px 0 var(--s3);
-  height: 40px;
-  min-width: 300px;
+  height: var(--target);
+  width: 300px;
+  min-width: 0;
+  flex: 0 1 auto;
   cursor: pointer;
 }
 .pick select:hover { border-color: var(--ink-soft); }
 
-.meta { margin-left: auto; display: flex; align-items: center; gap: var(--s5); white-space: nowrap; }
+.passport { display: flex; align-items: center; gap: var(--s2); margin-left: auto; flex: none; }
+.stamps { display: inline-flex; gap: 2px; }
+.stamp { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink-soft); background: transparent; }
+.stamp.done { background: var(--accent); border-color: var(--accent); }
+.stamp.challenge { border-radius: 2px; }
 .progress-text { color: var(--ink-soft); }
-.progress-track { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: transparent; }
-.progress-bar { height: 100%; width: 0; background: var(--accent); transition: width 0.5s ease; }
+.progress-text .short { display: none; }
 
-#status { display: flex; align-items: center; gap: var(--s2); color: var(--ink-soft); }
-#status::before {
-  content: "";
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--ink-faint);
-}
+#status { display: flex; align-items: center; gap: var(--s2); color: var(--ink-soft); flex: none; }
+#status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-faint); }
 #status[data-kind="loading"]::before { animation: pulse 1.2s ease-in-out infinite; }
 #status[data-kind="ready"]::before { background: var(--accent); }
 #status[data-kind="running"]::before { background: var(--accent); animation: pulse 0.8s ease-in-out infinite; }
@@ -155,77 +147,59 @@ p { margin: 0 0 var(--s3); }
 #status[data-kind="error"]::before { background: var(--error); }
 @keyframes pulse { 50% { opacity: 0.25; } }
 
-.teacher-link { font-size: 15px; color: var(--ink-soft); }
+.teacher-link { font-size: 15px; color: var(--ink-soft); flex: none; }
+.teacher-link .short { display: none; }
+
+/* The sub-brand only fits comfortably on wide screens. */
+@media (max-width: 1500px) { .brand-sub { display: none; } }
 
 /* ---------- layout ---------- */
 .layout {
   flex: 1;
   min-height: 0;
+  position: relative;
   display: grid;
-  grid-template-columns: 280px minmax(380px, 1fr) minmax(400px, 1fr);
+  grid-template-columns: 260px minmax(380px, 1fr) minmax(380px, 1fr);
   gap: 0 var(--s5);
-  padding: var(--s4) var(--s5) var(--s4);
+  padding: var(--s3) var(--s5);
 }
 
-/* ---------- lesson column ---------- */
+/* ---------- lesson column / drawer ---------- */
 .lesson {
   min-height: 0;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   padding-right: var(--s5);
   border-right: 1px solid var(--rule);
   font-size: 17px;
-  display: flex;
-  flex-direction: column;
 }
+.lesson-top { display: none; }
+.lesson-scroll { flex: 1; min-height: 0; overflow-y: auto; }
 .lesson-kind { color: var(--ink-soft); font-weight: 500; }
-.lesson h2 {
-  margin: 0 0 var(--s4);
-  font-size: 26px;
-  line-height: 1.2;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
+.lesson-kind:empty { display: none; }
+.lesson h2 { margin: 0 0 var(--s4); font-size: 26px; line-height: 1.2; font-weight: 800; letter-spacing: -0.01em; }
 .concept { margin-bottom: var(--s4); }
 .concept code, .steps code, .goal code, .hint code { white-space: nowrap; }
 .goal { margin: 0 0 var(--s4); padding-top: var(--s3); border-top: 1px solid var(--rule); }
 .goal-label { display: block; color: var(--ink-soft); font-weight: 500; }
 #lessonGoal { font-weight: 700; }
-.steps h3, .toolbox h3, .output-label {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ink-soft);
-}
+.steps h3, .output-label { margin: 0; font-size: 16px; font-weight: 700; color: var(--ink-soft); }
 .steps h3 { margin-bottom: var(--s2); }
 .steps ol { margin: 0; padding-left: 28px; }
 .steps li { margin-bottom: var(--s2); padding-left: 2px; }
 .steps li::marker { font-weight: 700; color: var(--accent); }
-
 .hint { margin-top: var(--s4); padding-left: var(--s4); border-left: 2px solid var(--ink); }
 .hint-n { display: block; font-weight: 700; margin-bottom: 2px; }
 .hint.solution pre {
-  font-size: 15px;
-  line-height: 1.5;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  padding: var(--s3);
-  margin: var(--s2) 0 var(--s3);
-  overflow: auto;
+  font-size: 15px; line-height: 1.5;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 2px;
+  padding: var(--s3); margin: var(--s2) 0 var(--s3); overflow: auto;
 }
-.hint-buttons { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s5); }
-.lesson-foot { margin-top: auto; padding-top: var(--s5); font-size: 15px; color: var(--ink-faint); }
+.lesson-foot { margin-top: var(--s5); font-size: 16px; color: var(--ink-soft); }
+.hint-bar { flex: none; display: flex; gap: var(--s2); flex-wrap: wrap; padding-top: var(--s3); border-top: 1px solid var(--rule); }
 
-/* Result banner: sticks to the top of the lesson column so it is always seen. */
-.check {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  margin: 0 0 var(--s4);
-  padding: var(--s3) var(--s4);
-  border-radius: 2px;
-}
-.check[hidden] { display: none; }
+/* Result banner: inside the lesson column at wide widths, above the editor at narrow widths. */
+.check { margin: 0 0 var(--s3); padding: var(--s3) var(--s4); border-radius: 2px; }
 .check.pass { background: var(--accent-wash); }
 .check.nudge { background: var(--warn-wash); }
 .check-title { font-weight: 800; font-size: 18px; margin-bottom: 2px; }
@@ -233,13 +207,15 @@ p { margin: 0 0 var(--s3); }
 .check.nudge .check-title { color: var(--warn); }
 .check p { margin: 0 0 var(--s2); }
 .check .btn { margin-top: var(--s1); white-space: normal; text-align: left; line-height: 1.3; padding-top: 8px; padding-bottom: 8px; }
+.check-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 /* ---------- buttons ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s2);
-  min-height: 40px;
+  min-height: var(--target);
   padding: 0 var(--s4);
   border: 1px solid var(--rule);
   border-radius: 4px;
@@ -253,44 +229,44 @@ p { margin: 0 0 var(--s3); }
 .btn:hover:not(:disabled) { border-color: var(--ink-soft); background: #ffffff; }
 .btn:active:not(:disabled) { background: var(--paper-deep); }
 .btn:disabled { opacity: 0.4; cursor: default; }
-.btn-primary, .btn-run {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: var(--accent);
-}
+.btn-primary, .btn-run { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn-primary:hover:not(:disabled), .btn-run:hover:not(:disabled) { background: #0c5a3d; border-color: #0c5a3d; }
-.btn-run { font-size: 18px; min-height: 44px; padding: 0 var(--s5); }
+.btn-run { font-size: 18px; min-height: var(--row-h); padding: 0 var(--s4) 0 var(--s3); }
 .btn-run.is-running { background: var(--ink-soft); border-color: var(--ink-soft); }
+.btn-stack { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; }
+.kbd { font-size: 12px; font-weight: 500; opacity: 0.85; }
 .btn-stop:not(:disabled) { color: var(--error); border-color: var(--error); }
 .btn-toggle.is-on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.btn-small { min-height: 34px; padding: 0 var(--s3); font-size: 15px; }
+.btn-small { padding: 0 var(--s3); font-size: 15px; }
 .btn-icon { padding: 0 var(--s3); font-family: var(--mono); }
 .btn-quiet { border-color: transparent; background: transparent; color: var(--ink-soft); }
 .btn-quiet:hover:not(:disabled) { background: var(--paper-deep); border-color: transparent; }
+.btn-danger { color: var(--error); border-color: var(--error); background: transparent; }
+.btn-danger:hover:not(:disabled) { background: var(--error-wash); border-color: var(--error); }
+.btn-lesson { display: none; }
+.textsize { display: inline-flex; align-items: center; gap: var(--s1); }
+.textsize-label { font-weight: 700; color: var(--ink-soft); margin-right: var(--s1); }
 
-/* ---------- editor column ---------- */
+/* ---------- code column ---------- */
 .work { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: var(--s3); }
-.toolbar { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
-.toolbar-bottom { gap: 0; }
-.toolbar-bottom .btn { padding: 0 var(--s3); }
+#resultWork { flex: none; }
+#resultWork:not(:has(.check:not([hidden]))) { display: none; }
+.toolbar { flex: none; display: flex; gap: var(--s2); align-items: center; min-height: var(--row-h); }
+.toolbar-bottom { min-height: var(--target); }
+.toolbar-bottom .btn-quiet { padding: 0 var(--s3); }
 .spacer { flex: 1; }
 .editor-wrap {
   position: relative;
   flex: 1;
-  min-height: 160px;
+  min-height: 120px;
   border: 1px solid var(--rule);
   border-radius: 2px;
   background: var(--surface);
 }
 .CodeMirror {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  font-family: var(--mono);
-  font-size: 16px;
-  line-height: 1.6;
-  background: var(--surface);
-  color: var(--ink);
+  position: absolute; inset: 0; height: 100%;
+  font-family: var(--mono); font-size: 16px; line-height: 1.6;
+  background: var(--surface); color: var(--ink);
 }
 .CodeMirror-lines { padding: var(--s2) 0; }
 .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like { padding-left: var(--s3); }
@@ -310,37 +286,25 @@ p { margin: 0 0 var(--s3); }
 .cm-error-line { background: var(--error-wash) !important; }
 .cm-error-gutter { background: var(--error-wash); box-shadow: inset 3px 0 0 var(--error); }
 
-.output-wrap { flex: none; border: 1px solid var(--rule); border-radius: 2px; background: var(--surface); }
+/* Output: fixed height, scrolls inside, hosts errors too. The editor never shrinks. */
+.output-wrap {
+  flex: none;
+  height: var(--output-h);
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--surface);
+}
 .output-label { padding: var(--s2) var(--s3) 0; }
-.output {
-  min-height: 48px;
-  max-height: 150px;
-  overflow: auto;
-  padding: var(--s1) var(--s3) var(--s2);
-  font-size: 16px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-.output:empty::before {
-  content: "Anything you print() shows up here.";
-  color: var(--ink-faint);
-  font-family: var(--font);
-}
+.output { min-height: 48px; padding: var(--s1) var(--s3) var(--s2); font-size: 16px; line-height: 1.5; white-space: pre-wrap; }
+.output:empty::before { content: "Anything you print() shows up here."; color: var(--ink-faint); font-family: var(--font); }
+.output-wrap:has(#errorBox:not([hidden])) .output:empty { display: none; }
 .output .err { color: var(--error); }
 .output .note { color: var(--ink-soft); }
-
-.error { padding: var(--s3) var(--s3) var(--s3) var(--s4); border-top: 1px solid var(--rule); font-size: 17px; }
+.error { padding: var(--s1) var(--s3) var(--s3) var(--s4); font-size: 17px; }
 .err-title { color: var(--error); font-weight: 800; font-size: 18px; margin-bottom: var(--s1); }
 .error p { margin: 0 0 var(--s1); }
-.err-code {
-  font-size: 16px;
-  background: var(--paper-deep);
-  border-radius: 2px;
-  padding: var(--s2) var(--s3);
-  margin: var(--s2) 0;
-  overflow: auto;
-  white-space: pre;
-}
+.err-code { font-size: 16px; background: var(--paper-deep); border-radius: 2px; padding: var(--s2) var(--s3); margin: var(--s2) 0; overflow: auto; white-space: pre; }
 .err-code .ln { display: inline-block; min-width: 2.4em; color: var(--ink-faint); }
 .error details { margin-top: var(--s1); font-size: 15px; color: var(--ink-soft); }
 .error summary { cursor: pointer; }
@@ -348,30 +312,45 @@ p { margin: 0 0 var(--s3); }
 .error.notice .err-title { color: var(--ink); }
 
 /* ---------- drawing column ---------- */
-.draw { display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow-y: auto; gap: var(--s3); }
-.canvas-head { display: flex; align-items: center; justify-content: space-between; min-height: 34px; flex: none; }
+.draw { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: var(--s3); }
+.canvas-head { flex: none; display: flex; align-items: center; justify-content: space-between; min-height: var(--row-h); }
 .canvas-title { font-weight: 700; color: var(--ink-soft); }
+.canvas-box { flex: 0 1 auto; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
 #canvas {
-  flex: none;
-  width: 100%;
-  height: auto;
   display: block;
+  width: auto; height: auto;
+  max-width: min(100%, 640px);
+  max-height: min(100%, 480px);
   border: 1px solid var(--rule);
   border-radius: 2px;
   background: #ffffff;
   touch-action: none;
 }
 
-.toolbox { padding-top: var(--s2); }
-.toolbox-head { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s2); }
-.pal-help { color: var(--ink-soft); min-height: 1.5em; }
-.pal-group { display: grid; grid-template-columns: 64px 1fr; gap: var(--s1) var(--s2); align-items: start; margin-bottom: var(--s2); }
-.pal-group h4 { margin: 0; padding-top: 7px; font-size: 16px; font-weight: 700; color: var(--ink-soft); }
-.pal-items, .swatches { display: flex; flex-wrap: wrap; gap: var(--s1); }
+/* Toolbox: one tab of chips at a time, fixed height so the canvas doesn't jump between tabs. */
+.toolbox { flex: none; display: flex; flex-direction: column; gap: var(--s2); }
+.pal-tabs { display: flex; gap: var(--s1); }
+.pal-tab {
+  flex: 1 1 0; min-width: 0;
+  min-height: var(--target);
+  padding: 0 var(--s2);
+  border: 1px solid var(--rule);
+  border-radius: 4px 4px 0 0;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-weight: 700;
+  cursor: pointer;
+}
+.pal-tab[aria-selected="true"] { background: var(--surface); color: var(--ink); border-bottom-color: var(--surface); }
+.pal-panels { min-height: var(--toolbox-rows); }
+.pal-group { display: none; }
+.pal-group.is-active { display: block; }
+.pal-group h4 { display: none; }
+.pal-items, .swatches { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .pal-item {
   font-family: var(--mono);
   font-size: 16px;
-  min-height: 36px;
+  min-height: var(--target);
   padding: 0 var(--s3);
   border: 1px solid var(--rule);
   border-radius: 4px;
@@ -381,38 +360,77 @@ p { margin: 0 0 var(--s3); }
 }
 .pal-item:hover { border-color: var(--ink-soft); background: #ffffff; }
 .pal-item:active { background: var(--paper-deep); }
-.swatches { padding-top: 3px; }
-.swatch {
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.18);
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-.swatch:hover { transform: scale(1.15); }
+.swatch { width: var(--target); height: var(--target); border-radius: 50%; border: 1px solid rgba(0,0,0,0.18); cursor: pointer; }
+.swatch:hover { transform: scale(1.08); }
+.pal-help { min-height: 28px; font-weight: 500; color: var(--ink); }
 
 /* ---------- confetti layer ---------- */
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 #confetti canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-/* ---------- responsive ---------- */
-@media (max-width: 1100px) {
-  body { height: auto; overflow: auto; }
-  .layout { grid-template-columns: 300px 1fr; grid-template-rows: auto auto; }
-  .lesson { grid-row: 1 / 3; max-height: calc(100vh - var(--header-h) - 32px); position: sticky; top: var(--s4); }
-  .work { min-height: 560px; }
-  .draw { overflow: visible; }
+/* ---------- narrow: two columns, lesson drawer ---------- */
+@media (max-width: 1340px) {
+  .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 var(--s4); padding: var(--s3) var(--s4); }
   .brand-sub { display: none; }
+  .pick label { display: none; }
+  .pick select { width: 230px; }
+  .textsize-label { display: none; }
+  .progress-text .long { display: none; }
+  .stamp { width: 8px; height: 8px; }
+  .stamps { gap: 2px; }
+  .teacher-link .long { display: none; }
+  .teacher-link .short { display: inline; }
+  .progress-text .short { display: inline; }
+  .top { gap: var(--s3); padding: 0 var(--s4); }
+
+  .btn-lesson { display: inline-flex; }
+  .lesson {
+    position: absolute;
+    /* starts below the Run toolbar so Run, Stop and Turbo stay reachable */
+    top: calc(var(--s3) + var(--row-h) + var(--s3)); bottom: 0; left: 0;
+    width: 360px;
+    max-width: 85vw;
+    z-index: 20;
+    padding: var(--s3) var(--s4);
+    background: var(--paper);
+    border-right: 1px solid var(--rule);
+    box-shadow: 8px 0 24px rgba(0,0,0,0.12);
+    transform: translateX(-104%);
+    transition: transform 0.22s ease;
+  }
+  .lesson-open .lesson { transform: none; }
+  .lesson-top { flex: none; display: flex; align-items: center; justify-content: space-between; padding-bottom: var(--s2); margin-bottom: var(--s2); border-bottom: 1px solid var(--rule); }
+  .lesson-top-title { font-weight: 700; color: var(--ink-soft); }
+  #resultLesson .check { display: none; }
+  /* Compact banner above the editor: one row, so the editor keeps its height. */
+  #resultWork .check { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s1) var(--s3); padding: var(--s2) var(--s3); }
+  #resultWork .check-title { margin: 0; }
+  #resultWork .check p { margin: 0; flex: 1 1 200px; }
+  #resultWork .check .btn { margin: 0; }
+  #resultWork .check-actions { margin-left: auto; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .lesson { transition: none; }
+  #status::before { animation: none !important; }
+}
+
+/* ---------- phone: stack and scroll ---------- */
 @media (max-width: 760px) {
-  .top { height: auto; flex-wrap: wrap; gap: var(--s2) var(--s4); padding: var(--s3) var(--s4); }
+  body { height: auto; overflow: auto; }
+  .top { height: auto; flex-wrap: wrap; gap: var(--s2) var(--s3); padding: var(--s3) var(--s4); white-space: normal; }
   .pick { margin-left: 0; width: 100%; }
-  .pick select { flex: 1; min-width: 0; }
-  .meta { margin-left: 0; gap: var(--s4); }
+  .pick select { width: 100%; }
+  .passport { margin-left: 0; }
   .layout { display: flex; flex-direction: column; gap: var(--s5); padding: var(--s4); }
-  .lesson { position: static; max-height: none; overflow: visible; padding-right: 0; border-right: 0; padding-bottom: var(--s4); border-bottom: 1px solid var(--rule); }
-  .check { position: static; }
-  .work { min-height: 0; }
+  .btn-lesson { display: none; }
+  .lesson { position: static; transform: none; width: auto; max-width: none; box-shadow: none; border-right: 0; padding: 0 0 var(--s4); border-bottom: 1px solid var(--rule); }
+  .lesson-top { display: none; }
+  .lesson-scroll { overflow: visible; }
+  #resultLesson .check { display: block; }
   .editor-wrap { height: 320px; flex: none; }
-  .btn-run { flex: 1; justify-content: center; }
+  .toolbar { flex-wrap: wrap; }
+  .canvas-box { display: block; }
+  #canvas { width: 100%; max-height: none; }
+  .pal-tabs { flex-wrap: wrap; }
+  .pal-tab { flex: 1 1 30%; }
 }

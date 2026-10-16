@@ -14,11 +14,15 @@
      dots_min      { n }
      circles_min   { n }                  circle() used n times
    Each check has a `fail` message shown if it isn't met.
+
+   defaultToolboxTab: which toolbox tab opens with the lesson:
+     move | pen | shape | loop | other | colours   (Move if missing)
 */
 
 window.LESSONS = [
   {
     id: "hello",
+    defaultToolboxTab: "move",
     title: "Hello, turtle",
     emoji: "🐢",
     concept: "Every turtle program starts with <code>from turtle import *</code>. That line wakes the turtle up. After that, each line is one command for the turtle.",
@@ -43,6 +47,7 @@ window.LESSONS = [
   },
   {
     id: "turning",
+    defaultToolboxTab: "move",
     title: "Turning corners",
     emoji: "↪️",
     concept: "<code>left(90)</code> and <code>right(90)</code> turn the turtle on the spot. The number is the angle in degrees. 90 is a square corner, 180 is a U-turn, 360 is a full spin.",
@@ -66,6 +71,7 @@ window.LESSONS = [
   },
   {
     id: "square",
+    defaultToolboxTab: "move",
     title: "The square",
     emoji: "🟦",
     concept: "A square has 4 sides the same length and 4 corners of 90 degrees. So the turtle needs: forward, turn, forward, turn, forward, turn, forward, turn.",
@@ -89,6 +95,7 @@ window.LESSONS = [
   },
   {
     id: "penup",
+    defaultToolboxTab: "pen",
     title: "Pen up, pen down",
     emoji: "✏️",
     concept: "<code>penup()</code> lifts the pen off the paper so the turtle can move without drawing. <code>pendown()</code> puts it back.",
@@ -112,6 +119,7 @@ window.LESSONS = [
   },
   {
     id: "colours",
+    defaultToolboxTab: "colours",
     title: "Colours and thick pens",
     emoji: "🎨",
     concept: "<code>color(\"red\")</code> changes the pen colour. Colour names go inside quotes. <code>pensize(5)</code> makes the line thicker. Python spells it the American way: <b>color</b>, not colour.",
@@ -136,6 +144,7 @@ window.LESSONS = [
   },
   {
     id: "loops",
+    defaultToolboxTab: "loop",
     title: "Loops",
     emoji: "🔁",
     concept: "Instead of writing the same lines four times, a <code>for</code> loop repeats them for you. The lines to repeat are pushed in by 4 spaces (indented). Python uses the indent to know what's inside the loop.<br><br><code>for i in range(4):</code><br>&nbsp;&nbsp;&nbsp;&nbsp;<code>forward(100)</code><br>&nbsp;&nbsp;&nbsp;&nbsp;<code>right(90)</code>",
@@ -161,6 +170,7 @@ window.LESSONS = [
   },
   {
     id: "triangle",
+    defaultToolboxTab: "loop",
     title: "Triangles and angles",
     emoji: "🔺",
     concept: "To draw a shape the turtle must turn a full 360 degrees in total by the time it gets back to the start. A square has 4 corners, so each turn is 360 ÷ 4 = 90. A triangle has 3 corners, so each turn is 360 ÷ 3 = 120.",
@@ -184,6 +194,7 @@ window.LESSONS = [
   },
   {
     id: "fill",
+    defaultToolboxTab: "shape",
     title: "Filling shapes",
     emoji: "🪣",
     concept: "To colour a shape in: choose a fill colour with <code>fillcolor(\"...\")</code>, call <code>begin_fill()</code>, draw the shape, then call <code>end_fill()</code>. Python fills it in when you call end_fill.",
@@ -207,6 +218,7 @@ window.LESSONS = [
   },
   {
     id: "polygons",
+    defaultToolboxTab: "loop",
     title: "Any shape you like",
     emoji: "⬡",
     concept: "A shape with <b>n</b> sides needs <b>n</b> turns of <b>360 ÷ n</b> degrees. We can store the number of sides in a <b>variable</b> and let Python do the division: <code>right(360 / sides)</code>.",
@@ -232,6 +244,7 @@ window.LESSONS = [
   },
   {
     id: "star",
+    defaultToolboxTab: "loop",
     title: "Stars",
     emoji: "⭐",
     concept: "A 5-pointed star is 5 lines with a 144 degree turn after each one. The turtle spins round twice in total (5 × 144 = 720) which is what makes the lines cross over.",
@@ -255,6 +268,7 @@ window.LESSONS = [
   },
   {
     id: "spiral",
+    defaultToolboxTab: "loop",
     title: "Spirals",
     emoji: "🌀",
     concept: "The <code>i</code> in <code>for i in range(50):</code> is a variable that counts: 0, 1, 2, 3 ... up to 49. If you use <code>i</code> inside the loop, each time round is a little different. <code>forward(i * 5)</code> draws lines that get longer and longer.",
@@ -278,6 +292,7 @@ window.LESSONS = [
   },
   {
     id: "functions",
+    defaultToolboxTab: "loop",
     title: "Make your own command",
     emoji: "🧩",
     concept: "A <b>function</b> is a command you invent. <code>def square(size):</code> starts one called square. The indented lines underneath are what it does. Afterwards <code>square(50)</code> runs those lines with size = 50.",
@@ -302,6 +317,7 @@ window.LESSONS = [
   },
   {
     id: "flower",
+    defaultToolboxTab: "shape",
     title: "Circles and flowers",
     emoji: "🌸",
     concept: "<code>circle(50)</code> draws a circle of radius 50. If you draw a circle, turn a little, draw another, and keep going all the way round, you get a flower.",
@@ -325,6 +341,7 @@ window.LESSONS = [
   },
   {
     id: "free",
+    defaultToolboxTab: "move",
     title: "Free draw",
     emoji: "🖼️",
     concept: "You know enough now to draw anything. Use the toolbox to remind yourself of the commands. Save your picture with the <b>Download .py</b> button and open it in Thonny at home.",
@@ -347,6 +364,7 @@ window.LESSONS = [
 window.CHALLENGES = [
   {
     id: "house",
+    defaultToolboxTab: "shape",
     title: "House",
     emoji: "🏠",
     goal: "Draw a house: a square with a triangle roof on top. Extra: a door and a window.",
@@ -363,6 +381,7 @@ window.CHALLENGES = [
   },
   {
     id: "rainbow",
+    defaultToolboxTab: "shape",
     title: "Rainbow",
     emoji: "🌈",
     goal: "Draw a rainbow using half circles of different colours.",
@@ -379,6 +398,7 @@ window.CHALLENGES = [
   },
   {
     id: "initials",
+    defaultToolboxTab: "move",
     title: "Your initials",
     emoji: "🔤",
     goal: "Write your initials in big letters using lines. Use penup() and goto() to jump between letters.",
@@ -395,6 +415,7 @@ window.CHALLENGES = [
   },
   {
     id: "olympics",
+    defaultToolboxTab: "shape",
     title: "Olympic rings",
     emoji: "🏅",
     goal: "Five rings: blue, black, red on top; yellow and green underneath, overlapping.",
@@ -412,6 +433,7 @@ window.CHALLENGES = [
   },
   {
     id: "galaxy",
+    defaultToolboxTab: "colours",
     title: "Colour spiral",
     emoji: "🌌",
     goal: "A spiral that changes colour as it grows. Use the loop variable to pick a colour from a list.",
@@ -428,6 +450,7 @@ window.CHALLENGES = [
   },
   {
     id: "checker",
+    defaultToolboxTab: "loop",
     title: "Chessboard",
     emoji: "♟️",
     goal: "An 8 by 8 chessboard of filled squares. This one is hard: you'll need a loop inside a loop.",

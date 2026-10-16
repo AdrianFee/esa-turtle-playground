@@ -6,6 +6,10 @@ import { PALETTE, SWATCHES } from "./palette.js";
 const PYODIDE_VERSION = "0.28.3";
 const CDN = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 const BASE = new URL(".", location.href).href;
+const MASCOT_NAME = "Pip";  // placeholder: the club will choose the turtle's name
+const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+const NARROW = window.matchMedia("(max-width: 1340px)");
+const PHONE = window.matchMedia("(max-width: 760px)");
 
 const $ = (sel) => document.querySelector(sel);
 const LESSONS = window.LESSONS || [];
@@ -96,7 +100,7 @@ function insertSnippet(snippet, block) {
 const canvas = new TurtleCanvas($("#canvas"), {
   width: 640, height: 480,
   onIdle: () => setRunning(false),
-  onTitle: (t) => { $("#canvasTitle").textContent = t || ""; },
+  onTitle: (t) => { $("#canvasTitle").textContent = t || "Drawing"; },
 });
 
 // ---------------------------------------------------------------- worker
@@ -107,7 +111,7 @@ async function pickPyodideURL() {
 
 async function startWorker() {
   pyReady = false;
-  setStatus("loading", "Loading Python. The first time takes a moment");
+  setStatus("loading", "Loading…");
   const pyodideURL = await pickPyodideURL();
   worker = new Worker(BASE + "js/worker.js");
   worker.onmessage = onWorkerMessage;
@@ -121,7 +125,8 @@ function onWorkerMessage(ev) {
     case "status": setStatus("loading", m.text); break;
     case "ready":
       pyReady = true;
-      setStatus("ready", `Python ${m.version.split(".").slice(0, 2).join(".")} is ready`);
+      $("#status").title = `Pyodide ${m.version}`;
+      setStatus("ready", "Ready to code");
       $("#run").disabled = false;
       break;
     case "fatal":
@@ -191,8 +196,8 @@ function setRunning(v) {
   $("#run").classList.toggle("is-running", v);
   $("#run").disabled = v || !pyReady;
   $("#stop").disabled = !v;
-  if (v) setStatus("running", "Running");
-  else if (pyReady) setStatus("ready", "Ready");
+  if (v) setStatus("running", "Running…");
+  else if (pyReady) setStatus("ready", "Ready to code");
 }
 
 // ---------------------------------------------------------------- output panel
@@ -301,7 +306,11 @@ function runChecks() {
     celebrate();
   } else {
     box.className = "check nudge";
-    box.innerHTML = `<div class="check-title">It ran. Not finished yet.</div><p>${failed.fail}</p>`;
+    const canHint = current.hints && current.hints.length && (hintIndex < current.hints.length || current.solution);
+    box.innerHTML = `<div class="check-title">It ran. Not finished yet.</div><p>${failed.fail}</p>
+      ${canHint ? `<div class="check-actions"><button class="btn btn-small" id="nudgeHint">Give me a hint</button></div>` : ""}`;
+    const nh = $("#nudgeHint");
+    if (nh) nh.onclick = () => { if (hintIndex < current.hints.length) showHint(); else showSolution(); openLesson(true); };
   }
 }
 
@@ -395,9 +404,10 @@ function refreshLessonList() {
   mk("Lessons", LESSONS);
   mk("Challenges", CHALLENGES);
   if (current) sel.value = current.id;
-  const n = LESSONS.filter((l) => done.has(l.id)).length;
-  $("#progress").textContent = `${n} of ${LESSONS.length} lessons done`;
-  $("#progressBar").style.width = (100 * n / Math.max(LESSONS.length, 1)) + "%";
+  const n = ALL.filter((l) => done.has(l.id)).length;
+  $("#progress").innerHTML = `<span class="long">${n} of ${ALL.length} stamped</span><span class="short">${n}/${ALL.length}</span>`;
+  $("#progressBar").innerHTML = ALL.map((l) =>
+    `<span class="stamp${done.has(l.id) ? " done" : ""}${CHALLENGES.includes(l) ? " challenge" : ""}" title="${escapeHtml(l.title)}"></span>`).join("");
 }
 
 function loadLesson(id, codeOverride) {
@@ -406,7 +416,7 @@ function loadLesson(id, codeOverride) {
   hintIndex = 0;
   store.set("last", lesson.id);
   const isChallenge = CHALLENGES.includes(lesson);
-  $("#lessonKind").textContent = isChallenge ? "Challenge" : `Lesson ${LESSONS.indexOf(lesson) + 1}`;
+  $("#lessonKind").textContent = isChallenge ? "Challenge" : "";
   $("#lessonTitle").textContent = lesson.title;
   $("#lessonConcept").innerHTML = lesson.concept || "";
   $("#lessonConcept").hidden = !lesson.concept;
@@ -425,7 +435,8 @@ function loadLesson(id, codeOverride) {
   editor.setValue(codeOverride ?? saved ?? lesson.starter);
   editor.clearHistory();
   refreshLessonList();
-  editor.focus();
+  showTab(lesson.defaultToolboxTab || "move");
+  if (NARROW.matches && !PHONE.matches) openLesson(true); else editor.focus();
 }
 
 function showHint() {
@@ -456,11 +467,41 @@ function showSolution() {
 }
 
 // ---------------------------------------------------------------- palette
+const TAB_KEYS = [...PALETTE.map((g) => g.colour), "colours"];
+
+function showTab(key) {
+  if (!TAB_KEYS.includes(key)) key = "move";
+  for (const t of document.querySelectorAll(".pal-tab")) t.setAttribute("aria-selected", String(t.dataset.tab === key));
+  for (const g of document.querySelectorAll(".pal-group")) g.classList.toggle("is-active", g.dataset.tab === key);
+  store.set("tab", key);
+}
+
 function buildPalette() {
   const root = $("#palette");
+  const help = (text) => { $("#palHelp").textContent = text; };
+  const tabs = document.createElement("div");
+  tabs.className = "pal-tabs";
+  tabs.setAttribute("role", "tablist");
+  tabs.setAttribute("aria-label", "Toolbox");
+  const panels = document.createElement("div");
+  panels.className = "pal-panels";
+  const addTab = (key, label) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "pal-tab";
+    b.dataset.tab = key;
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", "false");
+    b.textContent = label;
+    b.addEventListener("click", () => showTab(key));
+    tabs.appendChild(b);
+  };
   for (const group of PALETTE) {
+    addTab(group.colour, group.group);
     const sec = document.createElement("div");
     sec.className = "pal-group pal-" + group.colour;
+    sec.dataset.tab = group.colour;
+    sec.setAttribute("role", "tabpanel");
     sec.innerHTML = `<h4>${group.group}</h4>`;
     const wrap = document.createElement("div");
     wrap.className = "pal-items";
@@ -470,16 +511,19 @@ function buildPalette() {
       b.className = "pal-item";
       b.textContent = it.label;
       b.title = it.help;
-      b.addEventListener("click", () => insertSnippet(it.snippet, it.block));
-      b.addEventListener("mouseenter", () => { $("#palHelp").textContent = it.help; });
-      b.addEventListener("focus", () => { $("#palHelp").textContent = it.help; });
+      b.addEventListener("click", () => { help(it.help); insertSnippet(it.snippet, it.block); });
+      b.addEventListener("mouseenter", () => help(it.help));
+      b.addEventListener("focus", () => help(it.help));
       wrap.appendChild(b);
     }
     sec.appendChild(wrap);
-    root.appendChild(sec);
+    panels.appendChild(sec);
   }
+  addTab("colours", "Colours");
   const sw = document.createElement("div");
   sw.className = "pal-group pal-colours";
+  sw.dataset.tab = "colours";
+  sw.setAttribute("role", "tabpanel");
   sw.innerHTML = "<h4>Colours</h4>";
   const wrap = document.createElement("div");
   wrap.className = "swatches";
@@ -490,12 +534,33 @@ function buildPalette() {
     b.style.background = c;
     b.title = c;
     b.setAttribute("aria-label", c);
-    b.addEventListener("click", () => { editor.replaceSelection(`"${c}"`, "end"); editor.focus(); });
-    b.addEventListener("mouseenter", () => { $("#palHelp").textContent = `"${c}". Click to put the name in your code.`; });
+    const text = `"${c}". Click to put the colour's name in your code.`;
+    b.addEventListener("click", () => { help(text); editor.replaceSelection(`"${c}"`, "end"); editor.focus(); });
+    b.addEventListener("mouseenter", () => help(text));
+    b.addEventListener("focus", () => help(text));
     wrap.appendChild(b);
   }
   sw.appendChild(wrap);
-  root.appendChild(sw);
+  panels.appendChild(sw);
+  root.appendChild(tabs);
+  root.appendChild(panels);
+  showTab(store.get("tab", "move"));
+}
+
+// ---------------------------------------------------------------- lesson drawer (narrow widths)
+function openLesson(open) {
+  document.body.classList.toggle("lesson-open", open);
+  $("#lessonToggle").setAttribute("aria-expanded", String(open));
+  if (open && NARROW.matches && !PHONE.matches) $("#lessonClose").focus();
+}
+
+/* The result banner lives in the lesson column at wide widths and above
+   the editor at narrow widths, so "Done" and nudges are never hidden in
+   a closed drawer. */
+function placeResult() {
+  const box = $("#checkResult");
+  const slot = NARROW.matches && !PHONE.matches ? $("#resultWork") : $("#resultLesson");
+  if (box.parentElement !== slot) slot.appendChild(box);
 }
 
 // ---------------------------------------------------------------- share / download
@@ -582,6 +647,14 @@ function init() {
   $("#lessonSelect").addEventListener("change", (e) => loadLesson(e.target.value));
   $("#fontUp").addEventListener("click", () => bumpFont(2));
   $("#fontDown").addEventListener("click", () => bumpFont(-2));
+  $("#runKbd").textContent = IS_MAC ? "Cmd+Enter" : "Ctrl+Enter";
+  $("#run").title = `Run your code (${IS_MAC ? "Cmd" : "Ctrl"}+Enter)`;
+  $("#lessonToggle").addEventListener("click", () => openLesson(!document.body.classList.contains("lesson-open")));
+  $("#lessonClose").addEventListener("click", () => { openLesson(false); editor.focus(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("lesson-open")) openLesson(false); });
+  placeResult();
+  NARROW.addEventListener("change", placeResult);
+  PHONE.addEventListener("change", placeResult);
 
   const shared = readHash();
   if (shared) {

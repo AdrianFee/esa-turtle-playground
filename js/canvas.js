@@ -11,6 +11,10 @@ const SHAPES = {
 };
 
 const SPRITE_SCALE = 1.35;
+// "pip" is the playground's own turtle, used when a program never calls shape().
+// An explicit shape("turtle") gives the standard Python turtle polygon above.
+const DEFAULT_SHAPE = "pip";
+const PLACEHOLDER_ID = "_placeholder";
 
 // Pixels per second and degrees per second for each speed 1..10. Speed 0 = instant.
 function pxPerSec(speed) { return 110 * Math.pow(1.36, speed - 1); }
@@ -53,6 +57,9 @@ export class TurtleCanvas {
     this.running = false;
     this.title = "";
     this.onTitle("");
+    // Show a turtle sitting at the centre before the first run so the
+    // start position is obvious. It is replaced by the program's own turtle.
+    this.turtles.set(PLACEHOLDER_ID, this._blankTurtle(PLACEHOLDER_ID));
     this._redrawLayer();
     this._render();
   }
@@ -88,12 +95,13 @@ export class TurtleCanvas {
     this._render();
   }
 
+  /** The drawing at its native size (640x480), whatever the screen's pixel ratio. */
   toDataURL() {
     const out = document.createElement("canvas");
-    out.width = this.canvas.width; out.height = this.canvas.height;
+    out.width = this.W; out.height = this.H;
     const c = out.getContext("2d");
     c.fillStyle = this.bg; c.fillRect(0, 0, out.width, out.height);
-    c.drawImage(this.layer, 0, 0);
+    c.drawImage(this.layer, 0, 0, out.width, out.height);
     return out.toDataURL("image/png");
   }
 
@@ -168,10 +176,15 @@ export class TurtleCanvas {
 
   // ---- applying commands ----
 
+  _blankTurtle(id) {
+    return { id, x: 0, y: 0, h: 0, vis: true, shape: DEFAULT_SHAPE, c: "black", f: "black", speed: 3, sw: 1, sl: 1 };
+  }
+
   _turtle(id) {
     let t = this.turtles.get(id);
     if (!t) {
-      t = { id, x: 0, y: 0, h: 0, vis: true, shape: "turtle", c: "black", f: "black", speed: 3, sw: 1, sl: 1 };
+      this.turtles.delete(PLACEHOLDER_ID);
+      t = this._blankTurtle(id);
       this.turtles.set(id, t);
     }
     return t;
@@ -181,7 +194,9 @@ export class TurtleCanvas {
     switch (c.t) {
       case "new": {
         const t = this._turtle(c.id);
-        t.shape = c.shape; t.vis = c.vis; t.c = c.c; t.f = c.f;
+        // Python's default shape name is "turtle"; only an explicit shape() call changes it.
+        t.shape = c.shape === "turtle" ? DEFAULT_SHAPE : c.shape;
+        t.vis = c.vis; t.c = c.c; t.f = c.f;
         break;
       }
       case "clone": {
@@ -211,7 +226,7 @@ export class TurtleCanvas {
       }
       case "s": {
         const t = this._turtle(c.id);
-        const op = { k: "stamp", id: c.id, x: c.x, y: c.y, h: c.h, shape: c.shape, c: c.c, f: c.f, sw: t.sw, sl: t.sl };
+        const op = { k: "stamp", id: c.id, x: c.x, y: c.y, h: c.h, shape: t.shape, c: c.c, f: c.f, sw: t.sw, sl: t.sl };
         this.ops.push(op); this._drawOp(this.lctx, op);
         break;
       }
@@ -353,7 +368,7 @@ export class TurtleCanvas {
     // Shapes point "up" (positive y) at heading 90; canvas y is flipped.
     c.rotate(-(heading - 90) * Math.PI / 180);
     c.scale(sl * d * SPRITE_SCALE, sw * d * SPRITE_SCALE);
-    if (shape === "turtle") {
+    if (shape === DEFAULT_SHAPE) {
       this._drawTurtleSprite(c, stroke, fill);
       c.restore();
       return;
