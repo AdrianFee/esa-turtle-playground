@@ -1,4 +1,4 @@
-# 🐢 ESA Turtle Playground
+# ESA Turtle Playground
 
 Learn Python with the turtle, in the browser. Made for Enniskillen STEM Academy students aged roughly 8 to 12.
 
@@ -8,7 +8,7 @@ Real Python 3 runs inside the page (via [Pyodide](https://pyodide.org)), with a 
 
 ## What's in it
 
-- **14 guided lessons** from "Hello, Turtle!" to functions, plus **6 challenges** (house, rainbow, Olympic rings, chessboard…). Each has a goal, steps, progressive hints, a worked solution, and a gentle completion check with a Next button.
+- **14 guided lessons** from "Hello, Turtle!" to functions, plus **6 challenges** (house, rainbow, Olympic rings, chessboard…). Each has a goal, steps, progressive hints, a worked solution, and a gentle completion check with a button to the next lesson.
 - **Plain-English error messages.** `foward(100)` → "Did you mean `forward`?". A missing colon, a bracket never closed, an unexpected indent, an unknown colour: each gets a short explanation and the line is highlighted. Python's real error name is still shown underneath so they learn it.
 - **Toolbox** of click-to-insert commands and colour swatches, so weak typists can still build programs.
 - **Big, friendly editor** (CodeMirror) with line numbers, auto-indent, bracket matching, and A+ / A− text size.
@@ -74,7 +74,7 @@ Open `js/lessons.js`. Each lesson is an object like:
 {
   id: "square",                   // unique, used for saving progress
   title: "The square",
-  emoji: "🟦",
+  emoji: "🟦",                    // no longer shown; lessons are numbered instead
   concept: "HTML explaining the idea",
   goal: "What they should end up with",
   steps: ["step 1", "step 2"],

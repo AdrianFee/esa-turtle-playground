@@ -107,7 +107,7 @@ async function pickPyodideURL() {
 
 async function startWorker() {
   pyReady = false;
-  setStatus("loading", "Loading Python… first time takes a moment");
+  setStatus("loading", "Loading Python. The first time takes a moment");
   const pyodideURL = await pickPyodideURL();
   worker = new Worker(BASE + "js/worker.js");
   worker.onmessage = onWorkerMessage;
@@ -121,11 +121,11 @@ function onWorkerMessage(ev) {
     case "status": setStatus("loading", m.text); break;
     case "ready":
       pyReady = true;
-      setStatus("ready", `Python ${m.version.split(".").slice(0, 2).join(".")} ready`);
+      setStatus("ready", `Python ${m.version.split(".").slice(0, 2).join(".")} is ready`);
       $("#run").disabled = false;
       break;
     case "fatal":
-      setStatus("error", "Python couldn't load. Check the internet connection and refresh. (" + m.text + ")");
+      setStatus("error", "Python couldn't load. Check the internet connection, then refresh the page. (" + m.text + ")");
       break;
     case "cmds": {
       if (m.runId !== undefined && m.runId !== runId) break;
@@ -141,7 +141,7 @@ function onWorkerMessage(ev) {
       canvas.programFinished();
       if (m.result.ok) {
         if (!cmdLog.length && !$("#output").textContent.trim()) {
-          showNotice("The program ran, but it didn't draw or print anything. Add some turtle commands!");
+          showNotice("It ran, but nothing was drawn or printed. Try adding a turtle command, like forward(100).");
         } else {
           runChecks();
         }
@@ -181,7 +181,7 @@ function stop() {
   canvas.halt();
   if (worker) worker.terminate();
   setRunning(false);
-  appendOutput("⏹ Stopped.\n", "note");
+  appendOutput("Stopped.\n", "note");
   $("#run").disabled = true;
   startWorker();
 }
@@ -191,7 +191,7 @@ function setRunning(v) {
   $("#run").classList.toggle("is-running", v);
   $("#run").disabled = v || !pyReady;
   $("#stop").disabled = !v;
-  if (v) setStatus("running", "Running…");
+  if (v) setStatus("running", "Running");
   else if (pyReady) setStatus("ready", "Ready");
 }
 
@@ -215,8 +215,9 @@ function showError(r) {
   const e = explainError(r);
   const box = $("#errorBox");
   box.hidden = false;
+  box.classList.remove("notice");
   box.innerHTML = `
-    <div class="err-title">😕 ${e.title}</div>
+    <div class="err-title">${e.title}</div>
     ${e.lines.map((l) => `<p>${l}</p>`).join("")}
     ${r.text ? `<pre class="err-code">${r.line ? `<span class="ln">${r.line}</span>` : ""}${escapeHtml(r.text)}</pre>` : ""}
     <details><summary>Python's own words: <code>${escapeHtml(r.type)}</code></summary><pre>${escapeHtml(e.raw)}</pre></details>`;
@@ -226,7 +227,8 @@ function showError(r) {
 function showNotice(text) {
   const box = $("#errorBox");
   box.hidden = false;
-  box.innerHTML = `<div class="err-title">💡 ${escapeHtml(text)}</div>`;
+  box.classList.add("notice");
+  box.innerHTML = `<div class="err-title">${escapeHtml(text)}</div>`;
 }
 
 function escapeHtml(s) {
@@ -290,20 +292,25 @@ function runChecks() {
     done.add(current.id);
     store.set("done", [...done]);
     const next = nextLesson();
-    box.innerHTML = `<div class="check-title">🎉 ${first ? "Brilliant! Lesson complete." : "Done again, nice one!"}</div>
+    box.innerHTML = `<div class="check-title">${first ? "That's it. Lesson done." : "Done again."}</div>
       <p>${escapeHtml(current.goal)}</p>
-      ${next ? `<button class="btn btn-primary" id="nextBtn">Next: ${next.emoji} ${escapeHtml(next.title)} →</button>` : "<p>You've finished everything. Try Free draw or make up your own challenge!</p>"}`;
+      ${next ? `<button class="btn btn-primary" id="nextBtn">Go to ${escapeHtml(lessonLabel(next))}</button>` : "<p>You've done the lot. Go back to Free draw and make something of your own.</p>"}`;
     const nb = $("#nextBtn");
     if (nb) nb.onclick = () => loadLesson(next.id);
     refreshLessonList();
     celebrate();
   } else {
     box.className = "check nudge";
-    box.innerHTML = `<div class="check-title">👍 It ran! Not quite finished yet…</div><p>${failed.fail}</p>`;
+    box.innerHTML = `<div class="check-title">It ran. Not finished yet.</div><p>${failed.fail}</p>`;
   }
 }
 
 function hideResult() { $("#checkResult").hidden = true; }
+
+function lessonLabel(l) {
+  const i = LESSONS.indexOf(l);
+  return i >= 0 ? `lesson ${i + 1}: ${l.title}` : `challenge: ${l.title}`;
+}
 
 function nextLesson() {
   const i = ALL.findIndex((l) => l.id === current.id);
@@ -311,19 +318,62 @@ function nextLesson() {
 }
 
 function celebrate() {
+  // A short fountain of paper over the drawing, in the colours the student used.
   const layer = $("#confetti");
   layer.innerHTML = "";
-  const colours = ["#ff5b5b", "#ffc83d", "#4ad66d", "#3fa7ff", "#c86bff", "#ff8ad8"];
-  for (let i = 0; i < 60; i++) {
-    const p = document.createElement("i");
-    p.style.left = Math.random() * 100 + "%";
-    p.style.background = colours[i % colours.length];
-    p.style.animationDelay = Math.random() * 0.6 + "s";
-    p.style.animationDuration = 1.4 + Math.random() * 1.2 + "s";
-    p.style.transform = `rotate(${Math.random() * 360}deg)`;
-    layer.appendChild(p);
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const s = stats();
+  let colours = [...s.colours];
+  for (const c of cmdLog) if (c.t === "f" && c.c) colours.push(c.c);
+  colours = [...new Set(colours.filter((c) => c && !/^(white|#f{3,6})$/i.test(c)))];
+  if (colours.length < 2) colours = ["#11704d", "#1b1a17", "#a4520e", "#7a3e9d"];
+
+  const area = $("#canvas").getBoundingClientRect();
+  const W = window.innerWidth, H = window.innerHeight, dpr = window.devicePixelRatio || 1;
+  const cv = document.createElement("canvas");
+  cv.width = W * dpr; cv.height = H * dpr;
+  layer.appendChild(cv);
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  const pieces = [];
+  for (let i = 0; i < 90; i++) {
+    const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.1;
+    const sp = 420 + Math.random() * 420;
+    pieces.push({
+      x: area.left + area.width * (0.25 + Math.random() * 0.5), y: area.top + area.height,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+      w: 6 + Math.random() * 6, h: 4 + Math.random() * 4,
+      rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 14, wob: Math.random() * Math.PI * 2,
+      c: colours[i % colours.length],
+    });
   }
-  setTimeout(() => { layer.innerHTML = ""; }, 3200);
+  const DUR = 2300, t0 = performance.now();
+  let last = t0;
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    const t = now - t0;
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalAlpha = t > DUR - 600 ? Math.max(0, (DUR - t) / 600) : 1;
+    for (const p of pieces) {
+      p.vy += 950 * dt;                       // gravity
+      p.vx *= 1 - 1.8 * dt; p.vy *= 1 - 1.0 * dt;   // air drag
+      p.wob += 7 * dt;
+      p.x += (p.vx + Math.sin(p.wob) * 45) * dt;
+      p.y += p.vy * dt;
+      p.rot += p.vr * dt;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.scale(1, 0.25 + 0.75 * Math.abs(Math.cos(p.wob * 1.3)));  // tumbling
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    if (t < DUR) requestAnimationFrame(frame); else layer.innerHTML = "";
+  }
+  requestAnimationFrame(frame);
 }
 
 // ---------------------------------------------------------------- lessons UI
@@ -337,7 +387,7 @@ function refreshLessonList() {
     items.forEach((l, i) => {
       const o = document.createElement("option");
       o.value = l.id;
-      o.textContent = `${done.has(l.id) ? "✅" : l.emoji} ${label === "Lessons" ? i + 1 + ". " : ""}${l.title}`;
+      o.textContent = `${label === "Lessons" ? i + 1 + ". " : ""}${l.title}${done.has(l.id) ? "  ✓" : ""}`;
       g.appendChild(o);
     });
     sel.appendChild(g);
@@ -346,7 +396,7 @@ function refreshLessonList() {
   mk("Challenges", CHALLENGES);
   if (current) sel.value = current.id;
   const n = LESSONS.filter((l) => done.has(l.id)).length;
-  $("#progress").textContent = `${n} / ${LESSONS.length} lessons done`;
+  $("#progress").textContent = `${n} of ${LESSONS.length} lessons done`;
   $("#progressBar").style.width = (100 * n / Math.max(LESSONS.length, 1)) + "%";
 }
 
@@ -357,7 +407,7 @@ function loadLesson(id, codeOverride) {
   store.set("last", lesson.id);
   const isChallenge = CHALLENGES.includes(lesson);
   $("#lessonKind").textContent = isChallenge ? "Challenge" : `Lesson ${LESSONS.indexOf(lesson) + 1}`;
-  $("#lessonTitle").textContent = `${lesson.emoji} ${lesson.title}`;
+  $("#lessonTitle").textContent = lesson.title;
   $("#lessonConcept").innerHTML = lesson.concept || "";
   $("#lessonConcept").hidden = !lesson.concept;
   $("#lessonGoal").innerHTML = lesson.goal;
@@ -366,7 +416,7 @@ function loadLesson(id, codeOverride) {
   steps.parentElement.hidden = !(lesson.steps && lesson.steps.length);
   $("#hintArea").innerHTML = "";
   $("#hintBtn").hidden = !(lesson.hints && lesson.hints.length);
-  $("#hintBtn").textContent = "💡 Hint";
+  $("#hintBtn").textContent = "Give me a hint";
   $("#solutionBtn").hidden = true;
   hideResult();
   clearOutput();
@@ -391,7 +441,7 @@ function showHint() {
     $("#hintBtn").hidden = true;
     $("#solutionBtn").hidden = !current.solution;
   } else {
-    $("#hintBtn").textContent = `💡 Another hint (${current.hints.length - hintIndex} left)`;
+    $("#hintBtn").textContent = `Another hint (${current.hints.length - hintIndex} left)`;
   }
 }
 
@@ -399,7 +449,7 @@ function showSolution() {
   const div = document.createElement("div");
   div.className = "hint solution";
   div.innerHTML = `<span class="hint-n">One way to do it</span><pre>${escapeHtml(current.solution)}</pre>
-    <button class="btn btn-small" id="useSolution">Put this in my editor</button>`;
+    <button class="btn btn-small" id="useSolution">Put this in my code</button>`;
   $("#hintArea").appendChild(div);
   $("#useSolution").onclick = () => { editor.setValue(current.solution); editor.focus(); };
   $("#solutionBtn").hidden = true;
@@ -441,7 +491,7 @@ function buildPalette() {
     b.title = c;
     b.setAttribute("aria-label", c);
     b.addEventListener("click", () => { editor.replaceSelection(`"${c}"`, "end"); editor.focus(); });
-    b.addEventListener("mouseenter", () => { $("#palHelp").textContent = `"${c}"  (click to insert)`; });
+    b.addEventListener("mouseenter", () => { $("#palHelp").textContent = `"${c}". Click to put the name in your code.`; });
     wrap.appendChild(b);
   }
   sw.appendChild(wrap);
@@ -452,7 +502,7 @@ function buildPalette() {
 function downloadPy() {
   let code = editor.getValue();
   if (!/\b(done|mainloop|exitonclick)\s*\(\s*\)/.test(code)) code = code.replace(/\s*$/, "\n\ndone()\n");
-  const header = `# Made in the ESA Turtle Playground\n# Open this file in Thonny and press Run!\n\n`;
+  const header = `# Made in the ESA Turtle Playground\n# Open this file in Thonny and press Run.\n\n`;
   const blob = new Blob([header + code], { type: "text/x-python" });
   triggerDownload(URL.createObjectURL(blob), `${(current && current.id) || "turtle"}.py`);
 }
@@ -485,7 +535,7 @@ async function share() {
   const url = `${location.origin}${location.pathname}#lesson=${current.id}&code=${encodeShare(editor.getValue())}`;
   try {
     await navigator.clipboard.writeText(url);
-    flash($("#share"), "Link copied!");
+    flash($("#share"), "Link copied");
   } catch {
     prompt("Copy this link:", url);
   }
@@ -513,7 +563,7 @@ function init() {
   $("#stop").addEventListener("click", stop);
   $("#clearCanvas").addEventListener("click", () => { canvas.reset(); });
   $("#resetCode").addEventListener("click", () => {
-    if (confirm("Put the starter code back? Your changes to this lesson will be lost.")) {
+    if (confirm("Start this lesson again with the starter code? Your changes will be lost.")) {
       editor.setValue(current.starter);
       editor.focus();
     }

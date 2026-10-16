@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ESA Turtle Playground</title>
   <meta name="description" content="Learn Python with the turtle, right in your browser. Made for Enniskillen STEM Academy.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐢</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg stroke='%231b1a17' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M8 20 L3 17 L4 20 L3 23 Z' fill='%23f4f1ea'/%3E%3Cellipse cx='12' cy='11' rx='4' ry='2.6' transform='rotate(-40 12 11)' fill='%23f4f1ea'/%3E%3Cellipse cx='26' cy='11' rx='4' ry='2.6' transform='rotate(40 26 11)' fill='%23f4f1ea'/%3E%3Cellipse cx='12' cy='29' rx='4' ry='2.6' transform='rotate(40 12 29)' fill='%23f4f1ea'/%3E%3Cellipse cx='26' cy='29' rx='4' ry='2.6' transform='rotate(-40 26 29)' fill='%23f4f1ea'/%3E%3Ccircle cx='33' cy='20' r='4.5' fill='%23f4f1ea'/%3E%3Cellipse cx='19' cy='20' rx='11' ry='9' fill='%2311704d'/%3E%3Cpath d='M13 20 L16 15 L22 15 L25 20 L22 25 L16 25 Z M16 15 L14 12 M22 15 L24 12 M25 20 L29 20 M22 25 L24 28 M16 25 L14 28 M13 20 L9 20' fill='none' stroke-opacity='.6'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700;800&family=Atkinson+Hyperlegible+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -15,61 +16,79 @@
   <div id="confetti" aria-hidden="true"></div>
 
   <header class="top">
-    <div class="brand">
-      <span class="logo">🐢</span>
-      <div>
-        <h1>Turtle Playground</h1>
-        <div class="sub">Enniskillen STEM Academy · Python for beginners</div>
-      </div>
-    </div>
-    <div class="lesson-pick">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <g stroke="#1b1a17" stroke-width="2" stroke-linejoin="round">
+          <path d="M8 20 L3 17 L4 20 L3 23 Z" fill="#f4f1ea"/>
+          <ellipse cx="12" cy="11" rx="4" ry="2.6" transform="rotate(-40 12 11)" fill="#f4f1ea"/>
+          <ellipse cx="26" cy="11" rx="4" ry="2.6" transform="rotate(40 26 11)" fill="#f4f1ea"/>
+          <ellipse cx="12" cy="29" rx="4" ry="2.6" transform="rotate(40 12 29)" fill="#f4f1ea"/>
+          <ellipse cx="26" cy="29" rx="4" ry="2.6" transform="rotate(-40 26 29)" fill="#f4f1ea"/>
+          <circle cx="33" cy="20" r="4.5" fill="#f4f1ea"/>
+          <ellipse cx="19" cy="20" rx="11" ry="9" fill="#11704d"/>
+          <path d="M13 20 L16 15 L22 15 L25 20 L22 25 L16 25 Z M16 15 L14 12 M22 15 L24 12 M25 20 L29 20 M22 25 L24 28 M16 25 L14 28 M13 20 L9 20" fill="none" stroke-opacity=".6"/>
+        </g>
+      </svg>
+      <span class="brand-name">Turtle Playground</span>
+      <span class="brand-sub">Enniskillen STEM Academy</span>
+    </a>
+    <div class="pick">
       <label for="lessonSelect">Lesson</label>
       <select id="lessonSelect"></select>
     </div>
-    <div class="progress">
-      <div id="progress" class="progress-text">0 / 0 lessons done</div>
-      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+    <div class="meta">
+      <span id="progress" class="progress-text">0 of 14 lessons done</span>
+      <span id="status" data-kind="loading">Loading Python</span>
+      <a class="teacher-link" href="teacher/">Teacher notes</a>
     </div>
-    <div id="status" data-kind="loading">Loading Python…</div>
+    <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
   </header>
 
   <main class="layout">
-    <!-- Lesson panel -->
-    <aside class="panel lesson" aria-label="Lesson">
+    <!-- Lesson notes -->
+    <aside class="lesson" aria-label="Lesson">
+      <div id="checkResult" class="check" hidden aria-live="polite"></div>
       <div class="lesson-kind" id="lessonKind">Lesson 1</div>
       <h2 id="lessonTitle">…</h2>
       <div id="lessonConcept" class="concept"></div>
-      <div class="goal"><span class="goal-label">Your goal</span><div id="lessonGoal"></div></div>
+      <div class="goal"><span class="goal-label">What to make</span><div id="lessonGoal"></div></div>
       <div class="steps">
-        <h3>Steps</h3>
+        <h3>How to do it</h3>
         <ol id="lessonSteps"></ol>
       </div>
       <div id="hintArea"></div>
       <div class="hint-buttons">
-        <button class="btn" id="hintBtn">💡 Hint</button>
-        <button class="btn" id="solutionBtn" hidden>👀 Show me one way</button>
+        <button class="btn" id="hintBtn">Give me a hint</button>
+        <button class="btn" id="solutionBtn" hidden>Show me one way to do it</button>
       </div>
-      <div id="checkResult" class="check" hidden></div>
+      <div class="lesson-foot">This is real Python 3, running in your browser. Everything you learn here works in Thonny too.</div>
     </aside>
 
-    <!-- Editor column -->
-    <section class="panel editor-col" aria-label="Code">
+    <!-- Code -->
+    <section class="work" aria-label="Code">
       <div class="toolbar">
-        <button class="btn btn-run" id="run" title="Run your code (Ctrl+Enter)">▶ Run</button>
-        <button class="btn btn-stop" id="stop" disabled title="Stop the program">■ Stop</button>
-        <button class="btn btn-toggle" id="turbo" aria-pressed="false" title="Skip the animation and draw instantly">⚡ Turbo</button>
+        <button class="btn btn-run" id="run" title="Run your code (Ctrl+Enter)">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+          Run
+        </button>
+        <button class="btn btn-stop" id="stop" disabled title="Stop the program">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></svg>
+          Stop
+        </button>
+        <button class="btn btn-toggle" id="turbo" aria-pressed="false" title="Skip the animation and draw instantly">Turbo</button>
         <span class="spacer"></span>
         <button class="btn btn-icon" id="fontDown" title="Smaller text">A−</button>
         <button class="btn btn-icon" id="fontUp" title="Bigger text">A+</button>
-        <button class="btn" id="resetCode" title="Put the starter code back">↺ Reset code</button>
       </div>
       <div class="editor-wrap">
         <textarea id="code" aria-label="Python code"></textarea>
       </div>
       <div class="toolbar toolbar-bottom">
-        <button class="btn" id="download" title="Save as a .py file you can open in Thonny">⬇ Download .py</button>
-        <button class="btn" id="savePng" title="Save your picture">🖼 Save picture</button>
-        <button class="btn" id="share" title="Copy a link to this code">🔗 Copy link</button>
+        <button class="btn btn-quiet" id="download" title="Save as a .py file you can open in Thonny">Download .py</button>
+        <button class="btn btn-quiet" id="savePng" title="Save your drawing as a picture">Save picture</button>
+        <button class="btn btn-quiet" id="share" title="Copy a link to this code">Copy link</button>
+        <span class="spacer"></span>
+        <button class="btn btn-quiet" id="resetCode" title="Put the starter code back">Start again</button>
       </div>
       <div class="output-wrap">
         <div class="output-label">Output</div>
@@ -78,27 +97,22 @@
       </div>
     </section>
 
-    <!-- Canvas + toolbox column -->
-    <section class="panel canvas-col" aria-label="Drawing">
+    <!-- Drawing and toolbox -->
+    <section class="draw" aria-label="Drawing">
       <div class="canvas-head">
         <span id="canvasTitle" class="canvas-title"></span>
-        <button class="btn btn-small" id="clearCanvas" title="Wipe the drawing">🧽 Clear</button>
+        <button class="btn btn-small btn-quiet" id="clearCanvas" title="Wipe the drawing">Clear drawing</button>
       </div>
       <canvas id="canvas" role="img" aria-label="Turtle drawing"></canvas>
       <div class="toolbox">
         <div class="toolbox-head">
           <h3>Toolbox</h3>
-          <div id="palHelp" class="pal-help">Click a command to add it to your code.</div>
+          <div id="palHelp" class="pal-help">Click a command to put it in your code.</div>
         </div>
         <div id="palette"></div>
       </div>
     </section>
   </main>
-
-  <footer class="foot">
-    <span>Real Python 3, running in your browser. Everything you learn here works in Thonny too.</span>
-    <a href="teacher/">Teacher notes</a>
-  </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/python/python.min.js"></script>

@@ -4,34 +4,81 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teacher notes · ESA Turtle Playground</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐢</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg stroke='%231b1a17' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M8 20 L3 17 L4 20 L3 23 Z' fill='%23f4f1ea'/%3E%3Cellipse cx='12' cy='11' rx='4' ry='2.6' transform='rotate(-40 12 11)' fill='%23f4f1ea'/%3E%3Cellipse cx='26' cy='11' rx='4' ry='2.6' transform='rotate(40 26 11)' fill='%23f4f1ea'/%3E%3Cellipse cx='12' cy='29' rx='4' ry='2.6' transform='rotate(40 12 29)' fill='%23f4f1ea'/%3E%3Cellipse cx='26' cy='29' rx='4' ry='2.6' transform='rotate(-40 26 29)' fill='%23f4f1ea'/%3E%3Ccircle cx='33' cy='20' r='4.5' fill='%23f4f1ea'/%3E%3Cellipse cx='19' cy='20' rx='11' ry='9' fill='%2311704d'/%3E%3Cpath d='M13 20 L16 15 L22 15 L25 20 L22 25 L16 25 Z M16 15 L14 12 M22 15 L24 12 M25 20 L29 20 M22 25 L24 28 M16 25 L14 28 M13 20 L9 20' fill='none' stroke-opacity='.6'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700;800&family=Atkinson+Hyperlegible+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root { --ink:#1f2a37; --muted:#5b6b7f; --line:#dbe4ef; --brand:#1f9d6b; --mono:"Fira Code",Menlo,Consolas,monospace; }
-    body { font-family: "Nunito", system-ui, sans-serif; color: var(--ink); background:#f2f6fb; margin:0; line-height:1.5; }
-    header { background: linear-gradient(90deg,#0f6b4a,#1f9d6b 60%,#2bb27f); color:white; padding:16px 24px; }
-    header h1 { margin:0; font-size:22px; } header a { color:#ffd166; font-weight:700; }
-    main { max-width: 980px; margin: 0 auto; padding: 20px 24px 60px; }
-    nav { background:white; border:1px solid var(--line); border-radius:12px; padding:12px 16px; margin-bottom:20px; columns: 2; }
-    nav a { display:block; color:#157a52; font-weight:700; text-decoration:none; padding:2px 0; }
-    section { background:white; border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:16px; }
-    section h2 { margin:0 0 4px; } .kind { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:1px; color:var(--brand); }
-    h3 { font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:14px 0 4px; }
-    pre { background:#0f172a; color:#e2e8f0; padding:12px; border-radius:8px; overflow:auto; font-family:var(--mono); font-size:13px; }
-    code { font-family:var(--mono); background:#eef3f9; padding:0 5px; border-radius:5px; font-size:0.92em; }
-    .notes { background:#fff7e6; border-left:4px solid #f59e0b; padding:8px 12px; border-radius:8px; }
-    ul.checks li { margin-bottom:2px; } .intro { background:white; border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:20px; }
-    .cols { display:grid; grid-template-columns: 1fr 1fr; gap:16px; } @media (max-width:760px){ .cols{grid-template-columns:1fr;} nav{columns:1;} }
+    /* Same tokens as css/style.css; kept inline so the page stands alone. */
+    :root {
+      --paper: #f4f1ea; --surface: #fffdf8; --paper-deep: #e9e4d8; --rule: #d6d0c2;
+      --ink: #1b1a17; --ink-soft: #625d53; --ink-faint: #9b958a; --accent: #11704d; --warn: #8c6a10;
+      --font: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+      --mono: "Atkinson Hyperlegible Mono", "SF Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); font-size: 17px; line-height: 1.5; color: var(--ink); background: var(--paper); }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    code { font-family: var(--mono); font-size: 0.94em; background: var(--paper-deep); padding: 1px 5px; border-radius: 3px; }
+    pre { font-family: var(--mono); font-size: 15px; line-height: 1.5; margin: 0; padding: 12px 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 2px; overflow: auto; }
+    p { margin: 0 0 12px; }
+
+    header { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--rule); }
+    header svg { width: 34px; height: 34px; }
+    header .name { font-weight: 800; font-size: 20px; }
+    header .name span { color: var(--ink-soft); font-weight: 500; }
+    header .name span::before { content: "·"; margin: 0 8px; }
+    header a { margin-left: auto; font-size: 15px; }
+
+    main { max-width: 960px; margin: 0 auto; padding: 32px 24px 96px; }
+    h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 24px; }
+    .intro p b { font-weight: 800; }
+    nav { columns: 2; column-gap: 32px; margin: 32px 0 24px; padding: 24px 0 0; border-top: 1px solid var(--rule); }
+    nav a { display: block; text-decoration: none; color: var(--ink); padding: 3px 0; font-weight: 500; }
+    nav a:hover { color: var(--accent); }
+    nav .n { display: inline-block; min-width: 2.2em; color: var(--ink-soft); font-weight: 400; }
+
+    section { padding: 32px 0; border-top: 1px solid var(--rule); }
+    .kind { color: var(--ink-soft); font-weight: 500; }
+    h2 { margin: 0 0 16px; font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+    h3 { font-size: 16px; font-weight: 700; color: var(--ink-soft); margin: 20px 0 6px; }
+    ol, ul { margin: 0; padding-left: 28px; }
+    li { margin-bottom: 4px; }
+    ol li::marker { font-weight: 700; color: var(--accent); }
+    .notes { padding-left: 16px; border-left: 2px solid var(--ink); }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .cols h3 { margin-top: 20px; }
+    ul.checks { list-style: none; padding-left: 0; }
+    ul.checks li { padding-left: 16px; text-indent: -16px; }
+    ul.checks li::before { content: "✓"; display: inline-block; width: 16px; text-indent: 0; color: var(--accent); font-weight: 700; }
+    ul.checks .else { color: var(--ink-soft); }
+    @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } nav { columns: 1; } header .name span { display: none; } }
   </style>
 </head>
 <body>
-<header><h1>🐢 Teacher notes</h1><a href="../">← Back to the playground</a></header>
+<header>
+  <svg viewBox="0 0 40 40" aria-hidden="true">
+    <g stroke="#1b1a17" stroke-width="2" stroke-linejoin="round">
+      <path d="M8 20 L3 17 L4 20 L3 23 Z" fill="#f4f1ea"/>
+      <ellipse cx="12" cy="11" rx="4" ry="2.6" transform="rotate(-40 12 11)" fill="#f4f1ea"/>
+      <ellipse cx="26" cy="11" rx="4" ry="2.6" transform="rotate(40 26 11)" fill="#f4f1ea"/>
+      <ellipse cx="12" cy="29" rx="4" ry="2.6" transform="rotate(40 12 29)" fill="#f4f1ea"/>
+      <ellipse cx="26" cy="29" rx="4" ry="2.6" transform="rotate(-40 26 29)" fill="#f4f1ea"/>
+      <circle cx="33" cy="20" r="4.5" fill="#f4f1ea"/>
+      <ellipse cx="19" cy="20" rx="11" ry="9" fill="#11704d"/>
+      <path d="M13 20 L16 15 L22 15 L25 20 L22 25 L16 25 Z M16 15 L14 12 M22 15 L24 12 M25 20 L29 20 M22 25 L24 28 M16 25 L14 28 M13 20 L9 20" fill="none" stroke-opacity=".6"/>
+    </g>
+  </svg>
+  <div class="name">Turtle Playground<span>Teacher notes</span></div>
+  <a href="../">Back to the playground</a>
+</header>
 <main>
+  <h1>Teacher notes</h1>
   <div class="intro">
-    <p><b>What the playground is.</b> Real CPython running in the browser (via Pyodide) with a drop-in <code>turtle</code> module that draws on a canvas. Nothing is installed and no data leaves the machine. Students' code is saved in their browser's local storage per lesson, so they should use the same computer and browser to pick up where they left off, or use <b>Copy link</b> / <b>Download .py</b> to carry work around.</p>
+    <p><b>What the playground is.</b> Real CPython running in the browser (via Pyodide) with a drop-in <code>turtle</code> module that draws on a canvas. Nothing is installed and no data leaves the machine. Students' code is saved in their browser's local storage per lesson, so they should use the same computer and browser to pick up where they left off, or use <b>Copy link</b> or <b>Download .py</b> to carry work around.</p>
     <p><b>Differences from Thonny.</b> <code>input()</code> and <code>textinput()</code> are not supported (a friendly message says so). Keyboard and mouse events (<code>onkey</code>, <code>onclick</code>) are accepted but do nothing. Everything else that students at this level use behaves the same, and the <b>Download .py</b> button adds <code>done()</code> so the file runs in Thonny.</p>
     <p><b>Error messages.</b> Python errors are translated into plain English with the offending line highlighted. The original Python error is always available under "Python's own words", so students still learn the real names (SyntaxError, NameError, IndentationError).</p>
-    <p><b>Completion checks.</b> Each lesson has light-touch checks (listed below) that look at the code and at what was drawn. They are deliberately generous: the point is encouragement, not grading. Passing a check shows a Next button and marks the lesson with a tick.</p>
+    <p><b>Completion checks.</b> Each lesson has light-touch checks (listed below) that look at the code and at what was drawn. They are deliberately generous: the point is encouragement, not grading. Passing a check shows a button to the next lesson and marks the lesson with a tick in the lesson list.</p>
     <p><b>Adding lessons.</b> Edit <code>js/lessons.js</code>. Each lesson is a small object with starter code, hints, a solution and checks; the comment at the top of the file lists the check types.</p>
   </div>
   <nav id="nav"></nav>
@@ -56,22 +103,22 @@
   const render = (l, kind) => `
     <section id="${l.id}">
       <div class="kind">${kind}</div>
-      <h2>${l.emoji} ${esc(l.title)}</h2>
+      <h2>${esc(l.title)}</h2>
       ${l.concept ? `<h3>Concept</h3><div>${l.concept}</div>` : ""}
-      <h3>Goal</h3><div>${l.goal}</div>
-      ${l.steps ? `<h3>Steps</h3><ol>${l.steps.map(s => `<li>${s}</li>`).join("")}</ol>` : ""}
+      <h3>What to make</h3><div>${l.goal}</div>
+      ${l.steps ? `<h3>How to do it</h3><ol>${l.steps.map(s => `<li>${s}</li>`).join("")}</ol>` : ""}
       ${l.notes ? `<h3>Teaching notes</h3><div class="notes">${l.notes}</div>` : ""}
       <div class="cols">
         <div><h3>Starter code</h3><pre>${esc(l.starter)}</pre></div>
         <div><h3>Solution</h3><pre>${esc(l.solution)}</pre></div>
       </div>
       ${l.hints ? `<h3>Hints (shown one at a time)</h3><ol>${l.hints.map(h => `<li>${h}</li>`).join("")}</ol>` : ""}
-      <h3>Completion checks</h3><ul class="checks">${(l.checks || []).map(c => `<li>${describeCheck(c)} <span style="color:#5b6b7f">— otherwise: ${c.fail}</span></li>`).join("")}</ul>
+      <h3>Completion checks</h3><ul class="checks">${(l.checks || []).map(c => `<li>${describeCheck(c)} <span class="else">· otherwise: ${c.fail}</span></li>`).join("")}</ul>
     </section>`;
   const L = window.LESSONS || [], C = window.CHALLENGES || [];
   document.getElementById("nav").innerHTML =
-    L.map((l, i) => `<a href="#${l.id}">${i + 1}. ${l.emoji} ${esc(l.title)}</a>`).join("") +
-    C.map((l) => `<a href="#${l.id}">Challenge: ${l.emoji} ${esc(l.title)}</a>`).join("");
+    L.map((l, i) => `<a href="#${l.id}"><span class="n">${i + 1}.</span>${esc(l.title)}</a>`).join("") +
+    C.map((l) => `<a href="#${l.id}"><span class="n">C</span>${esc(l.title)}</a>`).join("");
   document.getElementById("content").innerHTML =
     L.map((l, i) => render(l, `Lesson ${i + 1}`)).join("") + C.map((l) => render(l, "Challenge")).join("");
 </script>

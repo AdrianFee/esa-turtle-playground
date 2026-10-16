@@ -301,6 +301,51 @@ export class TurtleCanvas {
     c.restore();
   }
 
+  // The turtle itself: a shell with plates, a head, four legs and a tail.
+  // Drawn in local sprite units; "forward" is negative y here (the caller
+  // has already rotated for the heading). Same halo + outline treatment as
+  // the other shapes so it stays visible on any background colour.
+  _drawTurtleSprite(c, stroke, fill) {
+    const ell = (x, y, rx, ry, rot) => {
+      c.moveTo(x + rx * Math.cos(rot), y + rx * Math.sin(rot));
+      c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
+    };
+    const paint = () => {
+      c.fillStyle = fill; c.fill();
+      c.lineJoin = "round";
+      c.strokeStyle = "rgba(255,255,255,0.85)"; c.lineWidth = 2.2; c.stroke();
+      c.strokeStyle = stroke; c.lineWidth = 1; c.stroke();
+    };
+    // Legs, tail and head first, so the shell sits on top of them.
+    c.beginPath();
+    ell(-7.5, -5.5, 5.2, 3.3, Math.PI / 4);  // front left
+    ell(7.5, -5.5, 5.2, 3.3, -Math.PI / 4);  // front right
+    ell(-7.5, 7.5, 5.2, 3.3, -Math.PI / 4);  // back left
+    ell(7.5, 7.5, 5.2, 3.3, Math.PI / 4);    // back right
+    c.moveTo(-2.6, 9); c.lineTo(0, 17); c.lineTo(2.6, 9); c.closePath();  // tail
+    ell(0, -12.5, 4.3, 5.2, 0);              // head
+    paint();
+    // Eyes.
+    c.beginPath();
+    ell(-1.9, -14.3, 1, 1, 0);
+    ell(1.9, -14.3, 1, 1, 0);
+    c.fillStyle = "rgba(255,255,255,0.9)"; c.fill();
+    // Shell.
+    c.beginPath();
+    ell(0, 1, 9, 11, 0);
+    paint();
+    // Shell plates: a central hexagon with spokes to the rim.
+    c.beginPath();
+    const hex = [[0, -5.5], [4.8, -2.7], [4.8, 2.7], [0, 5.5], [-4.8, 2.7], [-4.8, -2.7]];
+    c.moveTo(hex[0][0], hex[0][1] + 1);
+    for (let i = 1; i < hex.length; i++) c.lineTo(hex[i][0], hex[i][1] + 1);
+    c.closePath();
+    const rim = [[0, -10], [7.8, -4.5], [7.8, 6.5], [0, 12], [-7.8, 6.5], [-7.8, -4.5]];
+    for (let i = 0; i < 6; i++) { c.moveTo(hex[i][0], hex[i][1] + 1); c.lineTo(rim[i][0], rim[i][1]); }
+    c.strokeStyle = "rgba(255,255,255,0.6)"; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = stroke; c.lineWidth = 0.6; c.globalAlpha = 0.5; c.stroke(); c.globalAlpha = 1;
+  }
+
   _drawShape(c, x, y, heading, shape, stroke, fill, sw = 1, sl = 1) {
     const d = this.dpr;
     c.save();
@@ -308,6 +353,11 @@ export class TurtleCanvas {
     // Shapes point "up" (positive y) at heading 90; canvas y is flipped.
     c.rotate(-(heading - 90) * Math.PI / 180);
     c.scale(sl * d * SPRITE_SCALE, sw * d * SPRITE_SCALE);
+    if (shape === "turtle") {
+      this._drawTurtleSprite(c, stroke, fill);
+      c.restore();
+      return;
+    }
     c.beginPath();
     if (shape === "circle") {
       c.arc(0, 0, 10, 0, Math.PI * 2);

@@ -19,7 +19,7 @@
 window.LESSONS = [
   {
     id: "hello",
-    title: "Hello, Turtle!",
+    title: "Hello, turtle",
     emoji: "🐢",
     concept: "Every turtle program starts with <code>from turtle import *</code>. That line wakes the turtle up. After that, each line is one command for the turtle.",
     goal: "Make the turtle draw a straight line.",
@@ -72,7 +72,7 @@ window.LESSONS = [
     goal: "Draw a square with sides of 100.",
     steps: [
       "Write <code>forward(100)</code> then <code>right(90)</code>.",
-      "Do that four times in total (copy and paste is allowed!).",
+      "Do that four times in total. Copying and pasting is fine.",
       "Run it. Does the turtle end up back where it started?",
     ],
     starter: "from turtle import *\n\nforward(100)\nright(90)\n",
@@ -136,12 +136,12 @@ window.LESSONS = [
   },
   {
     id: "loops",
-    title: "Loops!",
+    title: "Loops",
     emoji: "🔁",
     concept: "Instead of writing the same lines four times, a <code>for</code> loop repeats them for you. The lines to repeat are pushed in by 4 spaces (indented). Python uses the indent to know what's inside the loop.<br><br><code>for i in range(4):</code><br>&nbsp;&nbsp;&nbsp;&nbsp;<code>forward(100)</code><br>&nbsp;&nbsp;&nbsp;&nbsp;<code>right(90)</code>",
     goal: "Draw a square using a for loop, with only 2 lines inside the loop.",
     steps: [
-      "Type <code>for i in range(4):</code>. Don't forget the colon at the end!",
+      "Type <code>for i in range(4):</code>. Don't forget the colon at the end.",
       "On the next line press Tab, then type <code>forward(100)</code>.",
       "Underneath, also indented, type <code>right(90)</code>.",
       "Run it. Then try changing 4 to 8 and 90 to 45. What shape do you get?",
@@ -305,7 +305,7 @@ window.LESSONS = [
     title: "Circles and flowers",
     emoji: "🌸",
     concept: "<code>circle(50)</code> draws a circle of radius 50. If you draw a circle, turn a little, draw another, and keep going all the way round, you get a flower.",
-    goal: "Draw a flower from 12 circles. Then colour it in.",
+    goal: "Draw a flower out of 12 circles, then colour it in.",
     steps: [
       "Loop 12 times: <code>circle(60)</code> then <code>right(30)</code>. (12 × 30 = 360.)",
       "Add <code>speed(0)</code> at the top so it's instant.",
@@ -328,7 +328,7 @@ window.LESSONS = [
     title: "Free draw",
     emoji: "🖼️",
     concept: "You know enough now to draw anything. Use the toolbox to remind yourself of the commands. Save your picture with the <b>Download .py</b> button and open it in Thonny at home.",
-    goal: "Draw whatever you like! Try the Challenges when you're ready.",
+    goal: "Draw whatever you like. When you're ready, try a challenge.",
     steps: [
       "Plan your picture on paper first.",
       "Use functions for parts you draw more than once.",
