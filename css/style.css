@@ -128,7 +128,19 @@ p { margin: 0 0 var(--s3); }
   white-space: nowrap;
 }
 .brand { display: flex; align-items: center; gap: var(--s3); min-height: var(--target); color: var(--ink); text-decoration: none; min-width: 0; flex: none; }
-.brand svg { width: 34px; height: 34px; flex: none; }
+.brand svg, .mascot svg { width: 34px; height: 34px; flex: none; display: block; }
+.mascot { display: inline-flex; width: 34px; height: 34px; }
+/* Mascot motion. The idle blink is a timer in app.js that adds .is-blinking
+   for 140ms: no animation runs between blinks, so an idle page costs nothing.
+   Bob/bounce/tilt are short CSS animations tied to a state; off under reduced motion. */
+.pip .pip-eyes { transform-box: fill-box; transform-origin: center; }   /* no transition: a blink is two frames, 140ms apart */
+.mascot.is-blinking .pip-eyes { transform: scaleY(0.08); }
+.mascot[data-state="running"] svg { animation: pip-bob 0.7s ease-in-out infinite; }
+.mascot[data-state="happy"] svg { animation: pip-bounce 0.55s cubic-bezier(.3,1.4,.5,1) 1; }
+.mascot[data-state="oops"] svg { animation: pip-tilt 0.5s ease-in-out 1; }
+@keyframes pip-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes pip-bounce { 0% { transform: translateY(0); } 40% { transform: translateY(-7px); } 100% { transform: translateY(0); } }
+@keyframes pip-tilt { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-8deg); } }
 .brand-name { font-family: var(--display); font-weight: 600; font-size: 22px; letter-spacing: 0; }
 .brand-sub { color: var(--ink-soft); font-size: 15px; }
 .brand-sub::before { content: "·"; margin: 0 var(--s2); }
@@ -158,9 +170,10 @@ p { margin: 0 0 var(--s3); }
 
 .passport { display: flex; align-items: center; gap: var(--s2); margin-left: auto; flex: none; }
 .stamps { display: inline-flex; gap: 2px; }
-.stamp { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink-soft); background: transparent; }
-.stamp.done { background: var(--accent); border-color: var(--accent); }
-.stamp.challenge { border-radius: 2px; }
+.stamp-wrap { display: inline-flex; }
+.stamp-wrap svg { width: 10px; height: 10px; display: block; }
+.stamp-wrap.is-new svg { animation: stamp-press 0.5s cubic-bezier(.2,1.2,.4,1) 1; transform-origin: center; }
+@keyframes stamp-press { 0% { transform: scale(2.2); opacity: 0.4; } 60% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1); } }
 .progress-text { color: var(--ink-soft); }
 .progress-text .short { display: none; }
 
@@ -229,7 +242,8 @@ p { margin: 0 0 var(--s3); }
 .check { margin: 0 0 var(--s3); padding: var(--s3) var(--s4); border-radius: 10px; }
 .check.pass { background: var(--accent-wash); box-shadow: inset 0 0 0 2px var(--accent-deep); }
 .check.nudge { background: var(--warn-wash); box-shadow: inset 0 0 0 2px var(--warn); }
-.check-title { font-weight: 800; font-size: 18px; margin-bottom: 2px; }
+.check-title { display: flex; align-items: center; gap: var(--s2); font-weight: 800; font-size: 18px; margin-bottom: 2px; }
+.check-title .pip-face, .err-title .pip-face { width: 26px; height: 26px; flex: none; }
 .check.pass .check-title { color: var(--accent-deep); }
 .check.nudge .check-title { color: var(--warn); }
 .check p { margin: 0 0 var(--s2); }
@@ -334,7 +348,8 @@ p { margin: 0 0 var(--s3); }
 .output .note { color: var(--ink-soft); }
 .error { padding: var(--s2) var(--s3) var(--s3) var(--s4); font-size: 17px; background: var(--error-wash); box-shadow: inset 4px 0 0 var(--error); }
 .error.notice { background: var(--warn-wash); }
-.err-title { color: var(--error); font-weight: 800; font-size: 18px; margin-bottom: var(--s1); }
+.err-title { display: flex; align-items: center; gap: var(--s2); color: var(--error); font-weight: 800; font-size: 18px; margin-bottom: var(--s1); }
+.err-title code { font-size: 0.9em; }
 .error p { margin: 0 0 var(--s1); }
 .err-code { font-size: 16px; background: var(--paper-deep); border-radius: 2px; padding: var(--s2) var(--s3); margin: var(--s2) 0; overflow: auto; white-space: pre; }
 .err-code .ln { display: inline-block; min-width: 2.4em; color: var(--ink-soft); }
@@ -347,7 +362,7 @@ p { margin: 0 0 var(--s3); }
 .draw { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: var(--s3); }
 .canvas-head { flex: none; display: flex; align-items: center; justify-content: space-between; min-height: var(--row-h); }
 .canvas-title { font-weight: 700; color: var(--ink-soft); }
-.canvas-box { flex: 0 1 auto; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
+.canvas-box { position: relative; flex: 0 1 auto; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
 #canvas {
   display: block;
   width: auto; height: auto;
@@ -358,6 +373,9 @@ p { margin: 0 0 var(--s3); }
   background: #ffffff;
   touch-action: none;
 }
+
+/* The sprite overlay: sized and placed over the drawing canvas by JS, never part of the drawing. */
+.sprite-layer { position: absolute; left: 0; top: 0; pointer-events: none; }
 
 /* Toolbox: one tab of chips at a time, fixed height so the canvas doesn't jump between tabs. */
 .toolbox { flex: none; display: flex; flex-direction: column; gap: var(--s2); }
@@ -439,7 +457,7 @@ p { margin: 0 0 var(--s3); }
   .pick select { width: 230px; }
   .textsize-label { display: none; }
   .progress-text .long { display: none; }
-  .stamp { width: 8px; height: 8px; }
+  .stamp-wrap svg { width: 8px; height: 8px; }
   .stamps { gap: 2px; }
   .teacher-link .long { display: none; }
   .teacher-link .short { display: inline; }
@@ -475,6 +493,8 @@ p { margin: 0 0 var(--s3); }
 @media (prefers-reduced-motion: reduce) {
   .lesson { transition: none; }
   #status::before { animation: none !important; }
+  .mascot svg, .stamp-wrap.is-new svg { animation: none !important; }
+  .btn, .pal-item { transition: none; }
 }
 
 /* ---------- phone: stack and scroll ---------- */

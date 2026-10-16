@@ -56,7 +56,8 @@
 </head>
 <body>
 <header>
-  <svg viewBox="0 0 40 40" aria-hidden="true">
+  <span id="brandPip" aria-hidden="true" style="display:inline-flex"></span>
+  <svg viewBox="0 0 40 40" aria-hidden="true" hidden>
     <g stroke="#1b1a17" stroke-width="2" stroke-linejoin="round">
       <path d="M8 20 L3 17 L4 20 L3 23 Z" fill="#f4f1ea"/>
       <ellipse cx="12" cy="11" rx="4" ry="2.6" transform="rotate(-40 12 11)" fill="#f4f1ea"/>
@@ -84,6 +85,10 @@
   <nav id="nav"></nav>
   <div id="content"></div>
 </main>
+<script type="module">
+  import { pipSVG } from "../js/pip.js";
+  document.getElementById("brandPip").innerHTML = pipSVG({ state: "idle", size: 34 });
+</script>
 <script src="../js/lessons.js"></script>
 <script>
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));

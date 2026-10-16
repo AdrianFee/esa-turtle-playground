@@ -13,18 +13,7 @@
 <body>
   <header class="top">
     <a class="brand" href="./">
-      <svg viewBox="0 0 40 40" aria-hidden="true">
-        <g stroke="#1b1a17" stroke-width="2" stroke-linejoin="round">
-          <path d="M8 20 L3 17 L4 20 L3 23 Z" fill="#f4f1ea"/>
-          <ellipse cx="12" cy="11" rx="4" ry="2.6" transform="rotate(-40 12 11)" fill="#f4f1ea"/>
-          <ellipse cx="26" cy="11" rx="4" ry="2.6" transform="rotate(40 26 11)" fill="#f4f1ea"/>
-          <ellipse cx="12" cy="29" rx="4" ry="2.6" transform="rotate(40 12 29)" fill="#f4f1ea"/>
-          <ellipse cx="26" cy="29" rx="4" ry="2.6" transform="rotate(-40 26 29)" fill="#f4f1ea"/>
-          <circle cx="33" cy="20" r="4.5" fill="#f4f1ea"/>
-          <ellipse cx="19" cy="20" rx="11" ry="9" fill="#11704d"/>
-          <path d="M13 20 L16 15 L22 15 L25 20 L22 25 L16 25 Z M16 15 L14 12 M22 15 L24 12 M25 20 L29 20 M22 25 L24 28 M16 25 L14 28 M13 20 L9 20" fill="none" stroke-opacity=".6"/>
-        </g>
-      </svg>
+      <span id="mascot" class="mascot" data-state="idle" aria-hidden="true"></span>
       <span class="brand-name">Turtle Playground</span>
       <span class="brand-sub">Enniskillen STEM Academy</span>
     </a>
@@ -118,6 +107,7 @@
       </div>
       <div class="canvas-box">
         <canvas id="canvas" role="img" aria-label="Turtle drawing"></canvas>
+        <canvas id="spriteLayer" class="sprite-layer" aria-hidden="true"></canvas>
       </div>
       <div class="toolbox">
         <div id="palette"></div>

@@ -1,5 +1,12 @@
 /* TurtleCanvas: receives drawing commands from the Python worker and
-   animates them on an HTML canvas, turtle-style. */
+   animates them on an HTML canvas, turtle-style.
+
+   Two canvases: the drawing canvas holds the background, the child's
+   drawing and the line currently being drawn. The sprite overlay, a
+   separate transparent canvas laid on top, holds only the turtles. The
+   idle blink redraws the overlay alone and never touches the drawing;
+   Save picture reads the drawing layer only. */
+import { drawPipSprite } from "./pip.js";
 
 const SHAPES = {
   turtle: [[0,16],[-2,14],[-1,10],[-4,7],[-7,9],[-9,8],[-6,5],[-7,1],[-5,-3],[-8,-6],[-6,-8],[-4,-5],[0,-7],[4,-5],[6,-8],[8,-6],[5,-3],[7,1],[6,5],[9,8],[7,9],[4,7],[1,10],[2,14]],
@@ -23,6 +30,8 @@ function degPerSec(speed) { return 100 * Math.pow(1.3, speed - 1); }
 export class TurtleCanvas {
   constructor(canvas, opts = {}) {
     this.canvas = canvas;
+    this.overlay = opts.overlay || null;
+    this.reducedMotion = !!opts.reducedMotion;
     this.W = opts.width || 640;
     this.H = opts.height || 480;
     this.onIdle = opts.onIdle || (() => {});
@@ -32,18 +41,69 @@ export class TurtleCanvas {
     this._setupSize();
     this.reset();
     this._tick = this._tick.bind(this);
+    this.blinking = false;
+    this._blinkTimer = null;
+    if (this.overlay) {
+      this._syncOverlay();
+      if (window.ResizeObserver) new ResizeObserver(() => this._syncOverlay()).observe(this.canvas);
+      document.addEventListener("visibilitychange", () => {
+        // No timers at all while the tab is hidden.
+        if (document.hidden) this._stopBlink(); else this._scheduleBlink();
+      });
+      this._scheduleBlink();
+    }
+  }
+
+  /** Keep the overlay exactly on top of the drawing canvas, whatever size CSS gives it. */
+  _syncOverlay() {
+    const o = this.overlay, c = this.canvas;
+    o.style.left = c.offsetLeft + "px";
+    o.style.top = c.offsetTop + "px";
+    o.style.width = c.offsetWidth + "px";
+    o.style.height = c.offsetHeight + "px";
+  }
+
+  // ---- idle blink (overlay only) ----
+  /** Honour a change of the reduced-motion setting while the page is open. */
+  setReducedMotion(on) {
+    this.reducedMotion = !!on;
+    this._scheduleBlink();
+  }
+
+  _scheduleBlink() {
+    this._stopBlink();
+    if (this.reducedMotion || !this.overlay) return;
+    this._blinkTimer = setTimeout(() => this._blinkOnce(), 6000 + Math.random() * 4000);
+  }
+
+  _stopBlink() {
+    if (this._blinkTimer) { clearTimeout(this._blinkTimer); this._blinkTimer = null; }
+    if (this.blinking) { this.blinking = false; this._renderSprites(); }
+  }
+
+  _blinkOnce() {
+    this._blinkTimer = null;
+    const idle = !this.running && this.finished !== false && !document.hidden;
+    if (idle && [...this.turtles.values()].some((t) => t.vis)) {
+      this.blinking = true;
+      this._renderSprites();
+      this._blinkTimer = setTimeout(() => { this.blinking = false; this._renderSprites(); this._scheduleBlink(); }, 140);
+    } else {
+      this._scheduleBlink();
+    }
   }
 
   _setupSize() {
     const dpr = window.devicePixelRatio || 1;
     this.dpr = dpr;
-    for (const c of [this.canvas, this.layer]) {
+    for (const c of [this.canvas, this.layer, this.overlay].filter(Boolean)) {
       c.width = this.W * dpr;
       c.height = this.H * dpr;
     }
     this.canvas.style.aspectRatio = `${this.W} / ${this.H}`;
     this.ctx = this.canvas.getContext("2d");
     this.lctx = this.layer.getContext("2d");
+    this.octx = this.overlay ? this.overlay.getContext("2d") : null;
   }
 
   reset() {
@@ -316,51 +376,6 @@ export class TurtleCanvas {
     c.restore();
   }
 
-  // The turtle itself: a shell with plates, a head, four legs and a tail.
-  // Drawn in local sprite units; "forward" is negative y here (the caller
-  // has already rotated for the heading). Same halo + outline treatment as
-  // the other shapes so it stays visible on any background colour.
-  _drawTurtleSprite(c, stroke, fill) {
-    const ell = (x, y, rx, ry, rot) => {
-      c.moveTo(x + rx * Math.cos(rot), y + rx * Math.sin(rot));
-      c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
-    };
-    const paint = () => {
-      c.fillStyle = fill; c.fill();
-      c.lineJoin = "round";
-      c.strokeStyle = "rgba(255,255,255,0.85)"; c.lineWidth = 2.2; c.stroke();
-      c.strokeStyle = stroke; c.lineWidth = 1; c.stroke();
-    };
-    // Legs, tail and head first, so the shell sits on top of them.
-    c.beginPath();
-    ell(-7.5, -5.5, 5.2, 3.3, Math.PI / 4);  // front left
-    ell(7.5, -5.5, 5.2, 3.3, -Math.PI / 4);  // front right
-    ell(-7.5, 7.5, 5.2, 3.3, -Math.PI / 4);  // back left
-    ell(7.5, 7.5, 5.2, 3.3, Math.PI / 4);    // back right
-    c.moveTo(-2.6, 9); c.lineTo(0, 17); c.lineTo(2.6, 9); c.closePath();  // tail
-    ell(0, -12.5, 4.3, 5.2, 0);              // head
-    paint();
-    // Eyes.
-    c.beginPath();
-    ell(-1.9, -14.3, 1, 1, 0);
-    ell(1.9, -14.3, 1, 1, 0);
-    c.fillStyle = "rgba(255,255,255,0.9)"; c.fill();
-    // Shell.
-    c.beginPath();
-    ell(0, 1, 9, 11, 0);
-    paint();
-    // Shell plates: a central hexagon with spokes to the rim.
-    c.beginPath();
-    const hex = [[0, -5.5], [4.8, -2.7], [4.8, 2.7], [0, 5.5], [-4.8, 2.7], [-4.8, -2.7]];
-    c.moveTo(hex[0][0], hex[0][1] + 1);
-    for (let i = 1; i < hex.length; i++) c.lineTo(hex[i][0], hex[i][1] + 1);
-    c.closePath();
-    const rim = [[0, -10], [7.8, -4.5], [7.8, 6.5], [0, 12], [-7.8, 6.5], [-7.8, -4.5]];
-    for (let i = 0; i < 6; i++) { c.moveTo(hex[i][0], hex[i][1] + 1); c.lineTo(rim[i][0], rim[i][1]); }
-    c.strokeStyle = "rgba(255,255,255,0.6)"; c.lineWidth = 1; c.stroke();
-    c.strokeStyle = stroke; c.lineWidth = 0.6; c.globalAlpha = 0.5; c.stroke(); c.globalAlpha = 1;
-  }
-
   _drawShape(c, x, y, heading, shape, stroke, fill, sw = 1, sl = 1) {
     const d = this.dpr;
     c.save();
@@ -369,7 +384,11 @@ export class TurtleCanvas {
     c.rotate(-(heading - 90) * Math.PI / 180);
     c.scale(sl * d * SPRITE_SCALE, sw * d * SPRITE_SCALE);
     if (shape === DEFAULT_SHAPE) {
-      this._drawTurtleSprite(c, stroke, fill);
+      // Full shell detail only when the sprite is drawn at 48px or more on screen.
+      const cssScale = (this.canvas.clientWidth || this.W) / this.W;
+      const px = 20 * SPRITE_SCALE * Math.max(sw, sl) * cssScale;
+      const live = c === this.octx;   // the live turtle, not a stamp
+      drawPipSprite(c, { fill, stroke, eyes: live && this.blinking ? "closed" : "open", detail: px >= 48 ? "full" : "simple" });
       c.restore();
       return;
     }
@@ -391,29 +410,42 @@ export class TurtleCanvas {
     c.restore();
   }
 
-  _render() {
-    const c = this.ctx;
-    c.fillStyle = this.bg;
-    c.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    c.drawImage(this.layer, 0, 0);
-
-    // Partially-complete command (moving line or turning).
+  /** Where each turtle is right now, including one mid-move or mid-turn. */
+  _spriteStates() {
     const cur = this.current;
     const temp = new Map();
     if (cur && cur._dur > 0) {
       const t = this._turtle(cur.id);
       if (cur.t === "m") {
         const p = this.progress;
-        const x = cur.x0 + (cur.x1 - cur.x0) * p, y = cur.y0 + (cur.y1 - cur.y0) * p;
-        if (cur.pen) this._drawOp(c, { k: "line", x0: cur.x0, y0: cur.y0, x1: x, y1: y, c: cur.c, w: cur.w });
-        temp.set(t.id, { ...t, x, y, h: cur.h });
+        temp.set(t.id, { ...t, x: cur.x0 + (cur.x1 - cur.x0) * p, y: cur.y0 + (cur.y1 - cur.y0) * p, h: cur.h });
       } else if (cur.t === "r") {
-        const from = cur.h - cur.da;
-        temp.set(t.id, { ...t, h: from + cur.da * this.progress });
+        temp.set(t.id, { ...t, h: cur.h - cur.da + cur.da * this.progress });
       }
     }
-    for (const t of this.turtles.values()) {
-      const s = temp.get(t.id) || t;
+    return [...this.turtles.values()].map((t) => temp.get(t.id) || t);
+  }
+
+  _render() {
+    const c = this.ctx;
+    c.fillStyle = this.bg;
+    c.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    c.drawImage(this.layer, 0, 0);
+
+    // The line currently being drawn belongs to the drawing, so it goes on this canvas.
+    const cur = this.current;
+    if (cur && cur._dur > 0 && cur.t === "m" && cur.pen) {
+      const p = this.progress;
+      this._drawOp(c, { k: "line", x0: cur.x0, y0: cur.y0, x1: cur.x0 + (cur.x1 - cur.x0) * p, y1: cur.y0 + (cur.y1 - cur.y0) * p, c: cur.c, w: cur.w });
+    }
+    this._renderSprites();
+  }
+
+  /** Turtles only, on the overlay (or on the drawing canvas if there is no overlay). */
+  _renderSprites() {
+    const c = this.octx || this.ctx;
+    if (this.octx) c.clearRect(0, 0, this.overlay.width, this.overlay.height);
+    for (const s of this._spriteStates()) {
       if (s.vis) this._drawShape(c, s.x, s.y, s.h, s.shape, s.c, s.f, s.sw, s.sl);
     }
   }

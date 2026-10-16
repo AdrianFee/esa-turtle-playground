@@ -2,6 +2,7 @@
 import { TurtleCanvas } from "./canvas.js";
 import { explainError } from "./errors.js";
 import { PALETTE, SWATCHES } from "./palette.js";
+import { pipSVG, faceSVG, stampSVG } from "./pip.js";
 
 const PYODIDE_VERSION = "0.28.3";
 const CDN = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
@@ -10,6 +11,7 @@ const MASCOT_NAME = "Pip";  // placeholder: the club will choose the turtle's na
 const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 const NARROW = window.matchMedia("(max-width: 1340px)");
 const PHONE = window.matchMedia("(max-width: 760px)");
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const $ = (sel) => document.querySelector(sel);
 const LESSONS = window.LESSONS || [];
@@ -99,6 +101,8 @@ function insertSnippet(snippet, block) {
 // ---------------------------------------------------------------- canvas
 const canvas = new TurtleCanvas($("#canvas"), {
   width: 640, height: 480,
+  overlay: $("#spriteLayer"),
+  reducedMotion: REDUCED_MOTION.matches,
   onIdle: () => setRunning(false),
   onTitle: (t) => { $("#canvasTitle").textContent = t || "Drawing"; },
 });
@@ -144,6 +148,7 @@ function onWorkerMessage(ev) {
     case "done":
       if (m.runId !== runId) break;
       canvas.programFinished();
+      lastRunOk = !!m.result.ok;
       if (m.result.ok) {
         if (!cmdLog.length && !$("#output").textContent.trim()) {
           showNotice("It ran, but nothing was drawn or printed. Try adding a turtle command, like forward(100).");
@@ -162,6 +167,42 @@ function setStatus(kind, text) {
   const el = $("#status");
   el.dataset.kind = kind;
   el.textContent = text;
+}
+
+// ---------------------------------------------------------------- mascot (header)
+let mascotTimer = null;
+let lastRunOk = true;
+
+/* idle: blinks now and then. running: bobs. happy: one bounce, then idle.
+   oops: puzzled, stays until the next run. Motion is CSS; reduced-motion
+   makes each a static pose. */
+function setMascot(state) {
+  const el = $("#mascot");
+  if (!el) return;
+  if (mascotTimer) { clearTimeout(mascotTimer); mascotTimer = null; }
+  el.dataset.state = state;
+  el.classList.remove("is-blinking");
+  el.innerHTML = pipSVG({ state, size: 34 });
+  if (state === "happy") mascotTimer = setTimeout(() => setMascot("idle"), 1200);
+}
+
+/* Header blink: a timer, not a running animation. Skipped while a program
+   runs, while the tab is hidden, and under reduced motion. */
+let blinkTimer = null;
+function scheduleHeaderBlink() {
+  if (blinkTimer) clearTimeout(blinkTimer);
+  blinkTimer = null;
+  if (REDUCED_MOTION.matches || document.hidden) return;
+  blinkTimer = setTimeout(() => {
+    blinkTimer = null;
+    const el = $("#mascot");
+    if (!running && el && el.dataset.state === "idle") {
+      el.classList.add("is-blinking");
+      setTimeout(() => { el.classList.remove("is-blinking"); scheduleHeaderBlink(); }, 140);
+    } else {
+      scheduleHeaderBlink();
+    }
+  }, 5000 + Math.random() * 5000);
 }
 
 // ---------------------------------------------------------------- running
@@ -183,6 +224,7 @@ function run() {
 function stop() {
   if (!running) return;
   runId += 1;
+  lastRunOk = true;
   canvas.halt();
   if (worker) worker.terminate();
   setRunning(false);
@@ -192,12 +234,17 @@ function stop() {
 }
 
 function setRunning(v) {
+  const was = running;
   running = v;
+  document.body.classList.toggle("is-busy", v);
   $("#run").classList.toggle("is-running", v);
   $("#run").disabled = v || !pyReady;
   $("#stop").disabled = !v;
-  if (v) setStatus("running", "Running…");
-  else if (pyReady) setStatus("ready", "Ready to code");
+  if (v) { setStatus("running", "Running…"); setMascot("running"); }
+  else if (pyReady) {
+    setStatus("ready", "Ready to code");
+    if (was) setMascot(lastRunOk ? "happy" : "oops");
+  }
 }
 
 // ---------------------------------------------------------------- output panel
@@ -222,7 +269,7 @@ function showError(r) {
   box.hidden = false;
   box.classList.remove("notice");
   box.innerHTML = `
-    <div class="err-title">${e.title}</div>
+    <div class="err-title">${faceSVG("oops", 26)}<span>${e.title}</span></div>
     ${e.lines.map((l) => `<p>${l}</p>`).join("")}
     ${r.text ? `<pre class="err-code">${r.line ? `<span class="ln">${r.line}</span>` : ""}${escapeHtml(r.text)}</pre>` : ""}
     <details><summary>Python's own words: <code>${escapeHtml(r.type)}</code></summary><pre>${escapeHtml(e.raw)}</pre></details>`;
@@ -233,7 +280,7 @@ function showNotice(text) {
   const box = $("#errorBox");
   box.hidden = false;
   box.classList.add("notice");
-  box.innerHTML = `<div class="err-title">${escapeHtml(text)}</div>`;
+  box.innerHTML = `<div class="err-title">${faceSVG("thinking", 26)}<span>${escapeHtml(text)}</span></div>`;
 }
 
 function escapeHtml(s) {
@@ -297,17 +344,22 @@ function runChecks() {
     done.add(current.id);
     store.set("done", [...done]);
     const next = nextLesson();
-    box.innerHTML = `<div class="check-title">${first ? "That's it. Lesson done." : "Done again."}</div>
+    box.innerHTML = `<div class="check-title">${faceSVG("happy", 26)}<span>${first ? "That's it. Lesson done." : "Done again."}</span></div>
       <p>${escapeHtml(current.goal)}</p>
-      ${next ? `<button class="btn btn-primary" id="nextBtn">Go to ${escapeHtml(lessonLabel(next))}</button>` : "<p>You've done the lot. Go back to Free draw and make something of your own.</p>"}`;
+      ${next ? `<button class="btn btn-primary" id="nextBtn">Next: ${escapeHtml(lessonLabel(next))}</button>` : "<p>You've done the lot. Go back to Free draw and make something of your own.</p>"}`;
     const nb = $("#nextBtn");
     if (nb) nb.onclick = () => loadLesson(next.id);
     refreshLessonList();
-    celebrate();
+    if (first) {
+      // A new stamp: press it in once, and confetti once. Never on repeat runs.
+      const stamp = $("#progressBar").children[ALL.indexOf(current)];
+      if (stamp) stamp.classList.add("is-new");
+      celebrate();
+    }
   } else {
     box.className = "check nudge";
     const canHint = current.hints && current.hints.length && (hintIndex < current.hints.length || current.solution);
-    box.innerHTML = `<div class="check-title">It ran. Not finished yet.</div><p>${failed.fail}</p>
+    box.innerHTML = `<div class="check-title">${faceSVG("thinking", 26)}<span>It ran. Not finished yet.</span></div><p>${failed.fail}</p>
       ${canHint ? `<div class="check-actions"><button class="btn btn-small" id="nudgeHint">Give me a hint</button></div>` : ""}`;
     const nh = $("#nudgeHint");
     if (nh) nh.onclick = () => { if (hintIndex < current.hints.length) showHint(); else showSolution(); openLesson(true); };
@@ -318,7 +370,7 @@ function hideResult() { $("#checkResult").hidden = true; }
 
 function lessonLabel(l) {
   const i = LESSONS.indexOf(l);
-  return i >= 0 ? `lesson ${i + 1}: ${l.title}` : `challenge: ${l.title}`;
+  return i >= 0 ? `lesson ${i + 1}, ${l.title}` : `challenge, ${l.title}`;
 }
 
 function nextLesson() {
@@ -407,7 +459,7 @@ function refreshLessonList() {
   const n = ALL.filter((l) => done.has(l.id)).length;
   $("#progress").innerHTML = `<span class="long">${n} of ${ALL.length} stamped</span><span class="short">${n}/${ALL.length}</span>`;
   $("#progressBar").innerHTML = ALL.map((l) =>
-    `<span class="stamp${done.has(l.id) ? " done" : ""}${CHALLENGES.includes(l) ? " challenge" : ""}" title="${escapeHtml(l.title)}"></span>`).join("");
+    `<span class="stamp-wrap" title="${escapeHtml(l.title)}${done.has(l.id) ? " (stamped)" : ""}">${stampSVG({ done: done.has(l.id), challenge: CHALLENGES.includes(l), size: 10 })}</span>`).join("");
 }
 
 function loadLesson(id, codeOverride) {
@@ -680,6 +732,15 @@ function init() {
   $("#lessonClose").addEventListener("click", () => { openLesson(false); editor.focus(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("lesson-open")) openLesson(false); });
   placeResult();
+  setMascot("idle");
+  const icon = document.querySelector('link[rel="icon"]');
+  if (icon) icon.href = "data:image/svg+xml," + encodeURIComponent(pipSVG({ state: "idle", size: 40 }));
+  scheduleHeaderBlink();
+  REDUCED_MOTION.addEventListener("change", () => { canvas.setReducedMotion(REDUCED_MOTION.matches); scheduleHeaderBlink(); });
+  document.addEventListener("visibilitychange", () => {
+    document.body.classList.toggle("is-hidden", document.hidden);
+    if (document.hidden) { if (blinkTimer) clearTimeout(blinkTimer); blinkTimer = null; } else scheduleHeaderBlink();
+  });
   window.addEventListener("resize", updateTabScrollCue);
   NARROW.addEventListener("change", placeResult);
   PHONE.addEventListener("change", placeResult);

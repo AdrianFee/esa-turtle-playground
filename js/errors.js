@@ -91,7 +91,7 @@ export function explainError(r) {
 
   // ---- Name errors ----
   if (r.type === "NameError") {
-    out.title = `Python doesn't know the word ${esc(r.name || "")}`.trim() + where;
+    out.title = (r.name ? `Python doesn't know the word ${code(r.name)}` : "Python doesn't know that word") + where;
     if (r.kind === "missing_import") {
       L.push(`${code(r.name)} is a turtle command, but you haven't told Python to load the turtle. Add this as the very first line:`);
       L.push(code("from turtle import *"));

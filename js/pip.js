@@ -160,8 +160,8 @@ function faceParts(state, eyes, mouth, k) {
   } else {
     // idle and running: open eyes with a highlight, small smile.
     const dy = state === "running" ? -0.4 * k : 0;
-    out += `<circle cx="${lx}" cy="${ly + dy}" r="${r}" fill="${ink}"/><circle cx="${rx}" cy="${ry + dy}" r="${r}" fill="${ink}"/>`;
-    out += `<circle cx="${lx - 0.4 * k}" cy="${ly - 0.45 * k + dy}" r="${0.42 * k}" fill="#ffffff"/><circle cx="${rx - 0.4 * k}" cy="${ry - 0.45 * k + dy}" r="${0.42 * k}" fill="#ffffff"/>`;
+    out += `<g class="pip-eyes"><circle cx="${lx}" cy="${ly + dy}" r="${r}" fill="${ink}"/><circle cx="${rx}" cy="${ry + dy}" r="${r}" fill="${ink}"/>`;
+    out += `<circle cx="${lx - 0.4 * k}" cy="${ly - 0.45 * k + dy}" r="${0.42 * k}" fill="#ffffff"/><circle cx="${rx - 0.4 * k}" cy="${ry - 0.45 * k + dy}" r="${0.42 * k}" fill="#ffffff"/></g>`;
     out += `<path d="M${mouth.cx - 1.6 * k},${mouth.cy} q${1.6 * k},${2.2 * k} ${3.2 * k},0" fill="none" stroke="${ink}" stroke-width="${0.8 * k}" stroke-linecap="round"/>`;
   }
   return out;
