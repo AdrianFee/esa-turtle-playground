@@ -188,8 +188,12 @@ p { margin: 0 0 var(--s3); }
 .teacher-link { display: inline-flex; align-items: center; min-height: var(--target); padding: 0 var(--s1); font-size: 16px; font-weight: 700; color: var(--ink-soft); flex: none; }
 .teacher-link .short { display: none; }
 
-/* The sub-brand only fits comfortably on wide screens. */
-@media (max-width: 1500px) { .brand-sub { display: none; } }
+/* Below 1500px the sub-brand goes and the passport folds into two rows of 13 small stamps. */
+@media (max-width: 1500px) {
+  .brand-sub { display: none; }
+  .stamps { display: inline-grid; grid-template-columns: repeat(13, 8px); gap: 2px; }
+  .stamp-wrap svg { width: 8px; height: 8px; }
+}
 
 /* ---------- layout ---------- */
 .layout {
