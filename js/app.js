@@ -54,11 +54,17 @@ const editor = CodeMirror.fromTextArea($("#code"), {
     "Shift-Tab": (cm) => cm.indentSelection("subtract"),
     "Ctrl-Enter": () => run(),
     "Cmd-Enter": () => run(),
+    // Tab indents inside the editor, so Escape is the way out for keyboard users:
+    // it moves to the next control after the editor.
+    Esc: () => $("#download").focus(),
   },
 });
 editor.on("change", () => {
   if (current) store.set("code." + current.id, editor.getValue());
   clearErrorLine();
+  // Editing after an error is the child moving on: Pip stops looking puzzled.
+  const m = $("#mascot");
+  if (m && m.dataset.state === "oops") setMascot("idle");
 });
 
 function clearErrorLine() {
@@ -293,8 +299,11 @@ function stats() {
   let fills = 0, bg = false, penupMoves = 0, dots = 0, circles = 0;
   for (const c of cmdLog) {
     if (c.t === "m") {
+      // A colour counts whether it was used on a straight line or an arc; only
+      // straight pen-down lines count towards side lengths.
+      if (c.pen) colours.add(c.c);
       if (c.circ) continue;
-      if (c.pen) { lines.push(Math.hypot(c.x1 - c.x0, c.y1 - c.y0)); colours.add(c.c); }
+      if (c.pen) lines.push(Math.hypot(c.x1 - c.x0, c.y1 - c.y0));
       else penupMoves++;
     } else if (c.t === "r" && !c.circ) {
       turns.push(Math.abs(c.da));

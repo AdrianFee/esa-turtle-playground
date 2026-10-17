@@ -57,18 +57,6 @@
 <body>
 <header>
   <span id="brandPip" aria-hidden="true" style="display:inline-flex"></span>
-  <svg viewBox="0 0 40 40" aria-hidden="true" hidden>
-    <g stroke="#1b1a17" stroke-width="2" stroke-linejoin="round">
-      <path d="M8 20 L3 17 L4 20 L3 23 Z" fill="#f4f1ea"/>
-      <ellipse cx="12" cy="11" rx="4" ry="2.6" transform="rotate(-40 12 11)" fill="#f4f1ea"/>
-      <ellipse cx="26" cy="11" rx="4" ry="2.6" transform="rotate(40 26 11)" fill="#f4f1ea"/>
-      <ellipse cx="12" cy="29" rx="4" ry="2.6" transform="rotate(40 12 29)" fill="#f4f1ea"/>
-      <ellipse cx="26" cy="29" rx="4" ry="2.6" transform="rotate(-40 26 29)" fill="#f4f1ea"/>
-      <circle cx="33" cy="20" r="4.5" fill="#f4f1ea"/>
-      <ellipse cx="19" cy="20" rx="11" ry="9" fill="#11704d"/>
-      <path d="M13 20 L16 15 L22 15 L25 20 L22 25 L16 25 Z M16 15 L14 12 M22 15 L24 12 M25 20 L29 20 M22 25 L24 28 M16 25 L14 28 M13 20 L9 20" fill="none" stroke-opacity=".6"/>
-    </g>
-  </svg>
   <div class="name">Turtle Playground<span>Teacher notes</span></div>
   <a href="../">Back to the playground</a>
 </header>
@@ -81,6 +69,14 @@
     <p><b>Completion checks.</b> Each lesson has light-touch checks (listed below) that look at the code and at what was drawn. They are deliberately generous: the point is encouragement, not grading. Passing a check shows a button to the next lesson and marks the lesson with a tick in the lesson list.</p>
     <p><b>Versions.</b> The Python inside the page is Pyodide 0.28.3, which ships CPython 3.13. The status in the playground header just says "Ready to code"; hovering it shows the Pyodide version. The version is pinned in <code>js/app.js</code> (<code>PYODIDE_VERSION</code>) and in <code>scripts/vendor_pyodide.sh</code>.</p>
     <p><b>Adding lessons.</b> Edit <code>js/lessons.js</code>. Each lesson is a small object with starter code, hints, a solution and checks; the comment at the top of the file lists the check types.</p>
+  </div>
+  <h2 style="font-family:Fredoka,sans-serif;font-weight:600;font-size:22px;margin:32px 0 8px">What changed in the redesign</h2>
+  <div class="intro">
+    <p><b>Layout.</b> The whole workspace fits one screen with no page scrolling, on 1366×768 laptops, 1920×1080 screens, 1024-wide tablets and laptops at 125% zoom. The toolbox is now tabbed (Move, Pen, Shapes, Repeat, Other, Colours) and each lesson opens on the tab it needs. The output box has a fixed size and errors appear inside it, so the code never jumps. On narrow screens the lesson notes become a drawer behind the Lesson button; results then appear above the code. The turtle sits in the middle of the drawing from the start, and the canvas keeps its 640×480 coordinates at every size.</p>
+    <p><b>Readability and access.</b> Every piece of text is at least 4.5:1 contrast, including line numbers and code comments. Every control is at least 44px, every control shows a blue focus ring, the toolbox tabs work with the arrow keys, Escape leaves the code editor, and Ctrl+Enter (Cmd+Enter on a Mac) runs the program. Nothing depends on hovering: Turbo and the text-size buttons are labelled, and toolbox help appears on click as well.</p>
+    <p><b>Look.</b> Warm cream paper, one green for Run and for finished lessons, one coral for errors and Stop, and a colour per toolbox tab. Fredoka for titles and buttons, Atkinson Hyperlegible for everything children read. Buttons and toolbox chips are blocks that press down. Fonts are stored with the app, so nothing is fetched from Google.</p>
+    <p><b>Pip.</b> The turtle has a face and a name (a placeholder: the children will choose it). Pip sits in the header, blinks now and then, bobs while a program runs, bounces once when it finishes, and looks puzzled (never cross) when there is an error. The same Pip is the turtle on the canvas and the face on the result banners. The passport strip in the header gains a yellow stamp with a green ring for each finished lesson or challenge; confetti falls once, the first time a lesson is completed. All of this stays still if the computer's "reduce motion" setting is on.</p>
+    <p><b>Checks and fixes.</b> Every lesson and challenge was verified to open on the right tab, keep its hint button on screen, and pass with its reference solution. Two challenge solutions (Rainbow and Olympic rings) never passed before because colours used only in circles were not counted; that is fixed. The error message now puts the misspelled word in code style, and "Save picture" exports at exactly 640×480 on every screen.</p>
   </div>
   <nav id="nav"></nav>
   <div id="content"></div>

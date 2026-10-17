@@ -35,7 +35,7 @@ You need Python 3 installed (it's only used as a tiny web server; the students' 
 - **Windows:** double-click `start.bat`
 - **Anything:** `python3 scripts/serve.py`
 
-Then open <http://localhost:8008/>. The page itself still fetches Pyodide and CodeMirror from the internet unless you vendor them (next section).
+Then open <http://localhost:8008/>. The editor and fonts ship with the app; only Python (Pyodide) is fetched from the internet unless you vendor it (next section).
 
 > Opening `index.html` directly by double-clicking does **not** work: browsers block web workers and file loading from `file://`. Use one of the launchers above.
 
@@ -43,10 +43,9 @@ Then open <http://localhost:8008/>. The page itself still fetches Pyodide and Co
 
 ```bash
 scripts/vendor_pyodide.sh       # downloads ~30 MB into vendor/pyodide
-scripts/vendor_codemirror.sh    # downloads the editor into vendor/codemirror
 ```
 
-After that the app works with no internet at all (fonts fall back to system fonts). The `vendor/` downloads are git-ignored because they are large; run the scripts on each machine, or copy the whole folder onto a USB stick.
+After that the app works with no internet at all. Fonts and the editor are already local (`fonts/`, `lib/codemirror/`). The `vendor/` downloads are git-ignored because they are large; run the scripts on each machine, or copy the whole folder onto a USB stick.
 
 ## Layout
 

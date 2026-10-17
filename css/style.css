@@ -68,7 +68,6 @@
   --error-wash: #ffece6;
   --warn: #7a4e00;        /* nudge title, 6.4:1 on warn-wash */
   --warn-wash: #fff1cc;
-  --sun: #f2b32b;         /* reserved for passport stamps (step 4) */
   /* Toolbox category tints: ink text on each is 12:1 or better; label colours 5.5:1+ on their tint */
   --move: #dcebff;  --move-ink: #174a99;  --move-edge: #9fc1f0;
   --pen: #ffe6c2;   --pen-ink: #8a4a00;   --pen-edge: #f0c07a;
@@ -313,6 +312,8 @@ p { margin: 0 0 var(--s3); }
   font-family: var(--mono); font-size: 16px; line-height: 1.6;
   background: var(--surface); color: var(--ink);
 }
+/* Keyboard focus on the editor: the wrapper shows the same ring as every other control. */
+.editor-wrap:focus-within { outline: 3px solid var(--focus); outline-offset: -3px; }
 .CodeMirror-lines { padding: var(--s2) 0; }
 .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like { padding-left: var(--s3); }
 .CodeMirror-gutters { background: var(--paper); border-right: 1px solid var(--rule); width: 44px; }
